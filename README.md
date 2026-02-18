@@ -87,8 +87,7 @@ master-thesis/
 │   ├── train_base_online.py
 │   ├── visualize_base_online.py
 │   ├── train_advanced_online.py
-│   ├── visualize_advanced_online.py
-│   └── generate_pptx.py
+│   └── visualize_advanced_online.py
 ├── notebooks/              # Jupyter notebooks (all-in-one experiments)
 ├── data/                   # Dataset directory (CSV not tracked in git)
 ├── results/                # Training outputs (plots, metrics, JSON)
@@ -147,12 +146,6 @@ python scripts/visualize_base_offline.py
 python scripts/visualize_advanced_offline.py
 python scripts/visualize_base_online.py
 python scripts/visualize_advanced_online.py
-```
-
-### Generate Comparison Presentation
-
-```bash
-python scripts/generate_pptx.py
 ```
 
 ## Evaluation Metrics
