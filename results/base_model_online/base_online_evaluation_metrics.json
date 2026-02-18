@@ -1,0 +1,8 @@
+{
+  "model": "base_model_online_final.pth",
+  "architecture": "4-64-64-32-4",
+  "training_mode": "online_streaming",
+  "parameters": 6692,
+  "psnr_db": 11.524723052978516,
+  "ssim": 0.7577925324440002
+}

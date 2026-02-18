@@ -1,0 +1,7 @@
+{
+  "model": "large_model_minmax.pth",
+  "architecture": "4-128-128-64-4",
+  "parameters": 25668,
+  "psnr_db": 35.59341812133789,
+  "ssim": 0.9796537160873413
+}
