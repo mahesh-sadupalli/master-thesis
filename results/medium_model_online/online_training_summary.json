@@ -1,0 +1,12 @@
+{
+  "model_name": "medium_model",
+  "total_windows": 100,
+  "epochs_per_window": 100,
+  "total_epochs": 10000,
+  "final_loss": 0.0036267966497689486,
+  "final_psnr": 24.404766082763672,
+  "final_ssim": 0.8806113004684448,
+  "final_relative_error": 11.367630004882812,
+  "total_training_time": 66.62404227256775,
+  "avg_time_per_window": 0.6662404227256775
+}

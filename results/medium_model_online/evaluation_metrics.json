@@ -1,0 +1,9 @@
+{
+  "model": "medium_model_online_final.pth",
+  "architecture": "4-96-96-48-4",
+  "training_mode": "online_streaming",
+  "parameters": 14644,
+  "psnr_db": 12.698579788208008,
+  "ssim": 0.7599089741706848,
+  "relative_error_pct": 41.29761505126953
+}

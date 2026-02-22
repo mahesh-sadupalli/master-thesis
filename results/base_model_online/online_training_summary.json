@@ -3,10 +3,10 @@
   "total_windows": 100,
   "epochs_per_window": 100,
   "total_epochs": 10000,
-  "final_loss": 0.004121528472751379,
-  "final_psnr": 23.84941864013672,
-  "final_ssim": 0.8898535966873169,
-  "final_relative_error": 12.118181228637695,
-  "total_training_time": 42.604750633239746,
-  "avg_time_per_window": 0.42604750633239746
+  "final_loss": 0.0039919656701385975,
+  "final_psnr": 23.98813247680664,
+  "final_ssim": 0.8739909529685974,
+  "final_relative_error": 11.926189422607422,
+  "total_training_time": 43.55588936805725,
+  "avg_time_per_window": 0.4355588936805725
 }
