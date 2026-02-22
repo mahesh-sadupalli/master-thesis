@@ -4,12 +4,6 @@
 
 **Author:** Mahesh Sadupalli
 
-**Supervisor:** Prof. Dr.-Ing. Michael Oevermann
-**Mentor:** M.Sc. Abhishek Dhiman
-
-**University:** Brandenburgische Technische Universitat Cottbus-Senftenberg (BTU)
-**Faculty:** Fachgebiet Numerische Mathematik und Wissenschaftliches Rechnen
-
 ## Abstract
 
 This thesis investigates the application of neural networks for concurrent and real-time data compression in streaming spatio-temporal datasets. As modern scientific simulations generate increasingly large data volumes due to higher resolutions and longer runtimes, traditional storage and post-processing approaches face significant I/O bottlenecks and scalability limitations. This work proposes an in-situ and in-transit compression framework that employs deep learning neural networks to learn compact representations of data during runtime.
@@ -37,116 +31,32 @@ The core methodology involves training coordinate-based MLPs (Multi-Layer Percep
 - **Offline (batch) training:** The network trains over the entire dataset with multiple epochs, establishing baseline compression performance.
 - **Online (streaming) training:** The network trains incrementally using sliding temporal windows, simulating real-time in-situ compression where data arrives sequentially.
 
-## Results
-
-### Compression Performance
-
-| Method | Data Size | Base Model CR | Advanced Model CR |
-|--------|-----------|---------------|-------------------|
-| Binary (.bin) | 253 MB | 8,277 : 1 | 2,379 : 1 |
-| CSV raw (.csv) | 833 MB | 27,208 : 1 | 7,819 : 1 |
-
-### Offline vs Online Comparison
-
-| Metric | Base Offline | Base Online | Advanced Offline | Advanced Online |
-|--------|-------------|-------------|-----------------|-----------------|
-| PSNR (dB) | 30.90 | 11.52 | 35.59 | 6.42 |
-| SSIM | 0.920 | 0.758 | 0.980 | 0.684 |
-| Rel. Error (%) | 5.29 | -- | 3.04 | -- |
-
-### Key Findings
-
-- **Offline training** achieves excellent reconstruction quality (PSNR > 30 dB, SSIM > 0.92) with extreme compression ratios
-- **Online streaming** training suffers from **catastrophic forgetting** -- the model only remembers recent temporal windows, and larger networks are more susceptible
-- Online training metrics are misleading: per-window metrics look good, but evaluation on the full dataset reveals significant quality degradation
-
 ## Model Architectures
 
 | Model | Architecture | Parameters | Size |
 |-------|-------------|------------|------|
 | Base | 4 -> 64 -> 64 -> 32 -> 4 | 6,692 | ~30 KB |
-| Advanced | 4 -> 128 -> 128 -> 64 -> 4 | 25,668 | ~104 KB |
+| Medium | 4 -> 96 -> 96 -> 48 -> 4 | 14,644 | ~60 KB |
+| Large | 4 -> 128 -> 128 -> 64 -> 4 | 25,668 | ~104 KB |
 
-Both models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The network learns a function f(x, y, z, t) -> (Vx, Vy, P, TKE) mapping spatial coordinates and time to flow field variables, treating the data as a continuous implicit neural representation.
+All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The network learns a function f(x, y, z, t) -> (Vx, Vy, P, TKE) mapping spatial coordinates and time to flow field variables, treating the data as a continuous implicit neural representation.
 
-## Project Structure
+## Results
 
-```
-master-thesis/
-├── src/                    # Source code package
-│   ├── models.py           # RegressionModel + AdvancedRegressionModel
-│   ├── dataset.py          # FlowDatasetMinMax (min-max normalized)
-│   ├── metrics.py          # PSNR, SSIM, relative error calculations
-│   ├── train_offline.py    # Offline batch training loop
-│   └── train_online.py     # Online streaming training with temporal windows
-├── scripts/                # Runnable training & visualization scripts
-│   ├── train_base_offline.py
-│   ├── visualize_base_offline.py
-│   ├── train_advanced_offline.py
-│   ├── visualize_advanced_offline.py
-│   ├── train_base_online.py
-│   ├── visualize_base_online.py
-│   ├── train_advanced_online.py
-│   └── visualize_advanced_online.py
-├── notebooks/              # Jupyter notebooks (all-in-one experiments)
-├── data/                   # Dataset directory (CSV not tracked in git)
-├── results/                # Training outputs (plots, metrics, JSON)
-│   ├── base_model_offline/
-│   ├── base_model_online/
-│   ├── large_model_offline/
-│   └── large_model_online/
-└── docs/                   # Thesis document and task description
-```
+### Offline vs Online Comparison
 
-## Setup
+| Metric | Base Offline | Base Online | Medium Offline | Medium Online | Large Offline | Large Online |
+|--------|-------------|-------------|----------------|---------------|---------------|--------------|
+| PSNR (dB) | 32.15 | 11.97 | 33.58 | 12.70 | 35.99 | 9.67 |
+| SSIM | 0.955 | 0.755 | 0.958 | 0.760 | 0.986 | 0.668 |
+| Rel. Error (%) | 4.41 | 44.92 | 3.74 | 41.30 | 2.83 | 58.57 |
 
-```bash
-git clone https://github.com/mahesh-sadupalli/master-thesis.git
-cd master-thesis
+### Key Findings
 
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Dataset
-
-Place the CFD simulation dataset in the `data/` directory:
-
-```
-data/ML_test_loader_original_data.csv
-```
-
-The dataset is from a vortex shedding CFD simulation containing approximately 7.9 million spatio-temporal samples across 300 timesteps with 8 columns:
-
-- **Inputs (4):** x, y, z, t -- spatial coordinates and time
-- **Outputs (4):** Vx, Vy, Pressure, TKE -- velocity components, pressure, and turbulent kinetic energy
-
-## Usage
-
-### Training
-
-Run scripts from the project root:
-
-```bash
-# Offline training (batch -- full dataset, multiple epochs)
-python scripts/train_base_offline.py
-python scripts/train_advanced_offline.py
-
-# Online training (streaming -- temporal windows, incremental)
-python scripts/train_base_online.py
-python scripts/train_advanced_online.py
-```
-
-### Visualization
-
-```bash
-# Generate flow field reconstruction plots with error analysis
-python scripts/visualize_base_offline.py
-python scripts/visualize_advanced_offline.py
-python scripts/visualize_base_online.py
-python scripts/visualize_advanced_online.py
-```
+- **Offline training** achieves excellent reconstruction quality (PSNR > 32 dB, SSIM > 0.95) with extreme compression ratios across all model sizes
+- **Larger models improve offline performance** -- the large model reaches PSNR 35.99 dB and SSIM 0.986, significantly outperforming the base model
+- **Online streaming** training suffers from **catastrophic forgetting** -- the model only remembers recent temporal windows, and larger networks are more susceptible
+- Online training metrics are misleading: per-window metrics look good, but evaluation on the full dataset reveals significant quality degradation
 
 ## Evaluation Metrics
 
