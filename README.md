@@ -1,8 +1,8 @@
 # Concurrent Neural Network Training for Compression of Spatio-Temporal Data
 
-**Master's Thesis** -- M.Sc. Artificial Intelligence
+**Master's Thesis**
 
-**Author:** Mahesh Sadupalli
+> **Current Focus:** Exploring methods to prevent [catastrophic forgetting](https://arxiv.org/abs/2403.05175) in online training. Currently investigating [Nested Learning](https://arxiv.org/abs/2512.24695) — a new ML paradigm (NeurIPS 2025) that reframes deep learning models as nested, multi-level optimization problems to enable continual learning without forgetting.
 
 ## Abstract
 
@@ -26,7 +26,7 @@ Modern scientific simulations generate massive amounts of streaming spatio-tempo
 
 ## Approach
 
-The core methodology involves training coordinate-based MLPs (Multi-Layer Perceptrons) to learn mappings from spatio-temporal coordinates (x, y, z, t) to flow field variables (Vx, Vy, Pressure, TKE). The network approximates complex flow patterns as continuous functions, effectively replacing large discrete datasets with a compact set of network parameters. Two training paradigms are compared:
+The core methodology involves training coordinate-based MLPs ([Implicit Neural Representations](https://www.vincentsitzmann.com/siren/)) to learn mappings from spatio-temporal coordinates (x, y, z, t) to flow field variables (Vx, Vy, Pressure, TKE). The network approximates complex flow patterns as continuous functions, effectively replacing large discrete datasets with a compact set of network parameters. Two training paradigms are compared:
 
 - **Offline (batch) training:** The network trains over the entire dataset with multiple epochs, establishing baseline compression performance.
 - **Online (streaming) training:** The network trains incrementally using sliding temporal windows, simulating real-time in-situ compression where data arrives sequentially.
@@ -55,13 +55,13 @@ All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The ne
 
 - **Offline training** achieves excellent reconstruction quality (PSNR > 32 dB, SSIM > 0.95) with extreme compression ratios across all model sizes
 - **Larger models improve offline performance** -- the large model reaches PSNR 35.99 dB and SSIM 0.986, significantly outperforming the base model
-- **Online streaming** training suffers from **catastrophic forgetting** -- the model only remembers recent temporal windows, and larger networks are more susceptible
+- **Online streaming** training suffers from **[catastrophic forgetting](https://arxiv.org/abs/2403.05175)** -- the model only remembers recent temporal windows, and larger networks are more susceptible
 - Online training metrics are misleading: per-window metrics look good, but evaluation on the full dataset reveals significant quality degradation
 
 ## Evaluation Metrics
 
-- **PSNR (Peak Signal-to-Noise Ratio):** Measures reconstruction quality in dB -- higher is better
-- **SSIM (Structural Similarity Index):** Measures structural fidelity between original and reconstructed fields (0 to 1) -- higher is better
+- **[PSNR](https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio) (Peak Signal-to-Noise Ratio):** Measures reconstruction quality in dB -- higher is better
+- **[SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure) (Structural Similarity Index):** Measures structural fidelity between original and reconstructed fields (0 to 1) -- higher is better
 - **MSE (Mean Squared Error):** Training loss function measuring average squared reconstruction error
 - **Relative Error:** L2 norm error as a percentage of the target norm
 - **Compression Ratio:** Original data size divided by model parameter size
