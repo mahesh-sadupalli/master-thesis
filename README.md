@@ -31,6 +31,91 @@ The core methodology involves training coordinate-based MLPs ([Implicit Neural R
 - **Offline (batch) training:** The network trains over the entire dataset with multiple epochs, establishing baseline compression performance.
 - **Online (streaming) training:** The network trains incrementally using sliding temporal windows, simulating real-time in-situ compression where data arrives sequentially.
 
+## Dataset Generation and Vortex Shedding Mechanics
+
+The dataset is generated from high-fidelity, time-resolved flow simulation in an engine-relevant virtual design setting. In this context, vortical structures naturally emerge due to velocity gradients, shear layers, blade-passage effects, and flow turning. As the flow evolves, coherent vortices are convected, stretched, tilted, and broken down into smaller-scale structures. This process is referred to as vortex shedding/shredding and is central to unsteady aerodynamic behavior, loss mechanisms, and turbulence production.
+
+From a field perspective, each simulation snapshot contains spatial distributions of velocity and pressure, along with a turbulence quantity (TKE). Across time, the solver produces a sequence of snapshots that captures the full unsteady flow evolution. The project uses this sequence as a spatio-temporal learning target, where neural networks approximate the continuous mapping from coordinates to flow variables.
+
+## Flow Variable Evolution During Vortex Shedding
+
+At every space-time coordinate `(x, y, z, t)`, the dataset stores four target variables:
+
+- `Vx`: velocity component in the x direction
+- `Vy`: velocity component in the y direction
+- `Pressure`: local pressure field value
+- `TKE`: turbulent kinetic energy level
+
+During vortex shedding/shredding, these variables co-evolve in a coupled way:
+
+- `Vx` and `Vy` encode local flow direction and speed changes. As vortices form and deform, velocity gradients intensify and directional patterns become more complex.
+- `Pressure` responds to local acceleration, curvature, and rotational flow organization. Pressure structures evolve as vortices convect and interact with surrounding flow.
+- `TKE` reflects turbulence intensity. As coherent structures break into smaller scales, local turbulence activity typically rises, especially in mixing and breakdown regions.
+
+In this project, the neural model learns this joint spatio-temporal behavior directly via supervised regression:
+
+`f(x, y, z, t) -> (Vx, Vy, Pressure, TKE)`
+
+## Dataset Structure and Feature Analysis
+
+The raw dataset file is:
+
+- `data/ML_test_loader_original_data.csv`
+
+### Dataset Shape
+
+- Total rows: **7,919,100**
+- Columns: **8**
+- Column order: `x, y, z, t, Vx, Vy, Pressure, TKE`
+- Learning setup: **supervised regression** (inputs: coordinates; targets: flow variables)
+
+### Spatio-Temporal Organization
+
+- Unique timesteps: **300**
+- Rows per timestep: **26,397** (constant for all timesteps)
+- Time range: **0.0000 to 0.0399**
+- Time unit: numerical time coordinate is present; physical unit (e.g., seconds or non-dimensional time) depends on simulation metadata
+- Timestep progression: non-decreasing in file order; one initial jump (`0.0 -> 0.0101`) followed by mostly `0.0001` increments
+- Spatial mesh consistency: identical `(x, y, z)` mesh reused at every timestep
+
+This means the data is a time-sequenced field dataset (a flattened flow movie), not independent tabular samples.
+
+### Coordinate Features
+
+- `x`: min `-0.09864`, max `0.27873`, mean `0.05750`, std `0.06332`
+- `y`: min `-0.04969`, max `0.04966`, mean `0.00004`, std `0.02830`
+- `z`: always `0.0` (single-plane slice)
+- Unique counts: `x=11,008`, `y=8,763`, `z=1`
+
+The per-timestep point count (`26,397`) is far smaller than `11,008 * 8,763`, so the data is not a full Cartesian product of all unique x-y values. It is a sampled/mesh-defined set of valid spatial points.
+
+### Target Feature Statistics
+
+- `Vx`: min `0.0`, max `1.0`, mean `0.64273`, std `0.13290`
+- `Vy`: min `0.0`, max `1.0`, mean `0.70217`, std `0.13931`
+- `Pressure`: min `0.0`, max `1.0`, mean `0.52043`, std `0.11592`
+- `TKE`: min `0.0`, max `1.0`, mean `0.05594`, std `0.13951`
+
+Observed directional tendency in velocity magnitudes:
+
+- Mean `|Vx| = 0.64273`
+- Mean `|Vy| = 0.70217`
+- Fraction with `|Vy| > |Vx|`: **66.61%**
+- Fraction with `|Vx| > |Vy|`: **33.39%**
+
+### Distributional Behavior (Important for Learning)
+
+`TKE` is strongly imbalanced toward low values:
+
+- `TKE < 0.01`: **70.33%** of rows
+- `TKE < 0.10`: **86.26%** of rows
+
+This imbalance is important for model behavior: standard MSE optimization can be dominated by low-TKE regions, making rare high-TKE events harder to fit accurately.
+
+### Normalization Note
+
+The stored target ranges are already bounded in `[0, 1]` at dataset level. The training pipeline still applies min-max normalization, which is effectively identity for already bounded targets, while remaining important for coordinate scaling.
+
 ## Model Architectures
 
 | Model | Architecture | Parameters | Size |
@@ -69,4 +154,3 @@ All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The ne
 ## License
 
 MIT
-
