@@ -2,7 +2,7 @@
 
 **Master's Thesis**
 
-> **Current Focus:** Exploring methods to prevent [catastrophic forgetting](https://arxiv.org/abs/2403.05175) in online training. Currently investigating [Nested Learning](https://arxiv.org/abs/2512.24695) — a new ML paradigm (NeurIPS 2025) that reframes deep learning models as nested, multi-level optimization problems to enable continual learning without forgetting.
+> **Current Focus:** Exploring methods to prevent [catastrophic forgetting](https://arxiv.org/abs/2403.05175) in online training. Currently investigating autoencoder-based approaches for robust spatio-temporal compression and improved continual adaptation.
 
 ## Abstract
 
