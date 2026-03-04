@@ -2,7 +2,7 @@
 
 **Master's Thesis**
 
-> **Current Focus:** Exploring methods to prevent [catastrophic forgetting](https://arxiv.org/abs/2403.05175) in online training. Currently investigating autoencoder-based approaches for robust spatio-temporal compression and improved continual adaptation.
+> **Current Focus:** Exploring methods to prevent [catastrophic forgetting] and experimenting various techniques like Experience Replay (ER) in online training. Currently investigating autoencoder-based approaches for robust spatio-temporal compression and improved continual adaptation.
 
 ## Abstract
 
