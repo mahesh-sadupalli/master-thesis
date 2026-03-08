@@ -173,6 +173,22 @@ All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The ne
 | SSIM | 0.955 | 0.755 | 0.958 | 0.760 | 0.986 | 0.668 |
 | Rel. Error (%) | 4.41 | 44.92 | 3.74 | 41.30 | 2.83 | 58.57 |
 
+### Flow Field Reconstructions -- Offline Training
+
+Each plot shows Original vs Predicted vs Absolute Error for all four field variables (Vx, Vy, Pressure, TKE).
+
+| Base Model (32.15 dB) | Medium Model (33.58 dB) | Large Model (35.99 dB) |
+|:---:|:---:|:---:|
+| ![](results/base_model_offline/base_flow_visualization.png) | ![](results/medium_model_offline/medium_offline_visualization.png) | ![](results/large_model_offline/large_model_visualization.png) |
+
+### Flow Field Reconstructions -- Online Training (Catastrophic Forgetting)
+
+Same evaluation on the full dataset reveals severe quality degradation due to catastrophic forgetting -- the model only retains knowledge of the most recent temporal window.
+
+| Base Model (11.97 dB) | Medium Model (12.70 dB) | Large Model (9.67 dB) |
+|:---:|:---:|:---:|
+| ![](results/base_model_online/base_online_visualization.png) | ![](results/medium_model_online/medium_online_visualization.png) | ![](results/large_model_online/large_online_visualization.png) |
+
 ### Key Findings
 
 - **Offline training** achieves excellent reconstruction quality (PSNR > 32 dB, SSIM > 0.95) with extreme compression ratios across all model sizes
@@ -204,6 +220,16 @@ Systematic evaluation of 8 CL strategies across 3 model sizes (24 experiments) t
 | Strategy Categories | Gap to Offline |
 |:---:|:---:|
 | ![](results/cl_comparison/cl_category_comparison.png) | ![](results/cl_comparison/cl_gap_to_offline.png) |
+
+#### CL Flow Field Reconstructions -- Naive vs Best Strategy
+
+Visual comparison of flow field quality before and after applying the best continual learning strategy for each model size.
+
+| | Naive (No CL) | Best CL Strategy |
+|:---|:---:|:---:|
+| **Base** (14.76 dB -> 22.40 dB) | ![](results/cl_comparison/flow_field_base_naive.png) | ![](results/cl_comparison/flow_field_base_best.png) |
+| **Medium** (12.28 dB -> 22.81 dB) | ![](results/cl_comparison/flow_field_medium_naive.png) | ![](results/cl_comparison/flow_field_medium_best.png) |
+| **Large** (15.05 dB -> 22.74 dB) | ![](results/cl_comparison/flow_field_large_naive.png) | ![](results/cl_comparison/flow_field_large_best.png) |
 
 #### CL Key Findings
 
