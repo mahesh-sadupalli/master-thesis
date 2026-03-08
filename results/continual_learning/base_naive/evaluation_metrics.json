@@ -1,0 +1,13 @@
+{
+  "model": "base_naive",
+  "architecture": "BaseCompressor(\n  (network): Sequential(\n    (0): Linear(in_features=4, out_features=64, bias=True)\n    (1): ReLU()\n    (2): Linear(in_features=64, out_features=64, bias=True)\n    (3): ReLU()\n    (4): Linear(in_features=64, out_features=32, bias=True)\n    (5): ReLU()\n    (6): Linear(in_features=32, out_features=4, bias=True)\n  )\n)",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "naive"
+  },
+  "parameters": 6692,
+  "loss": 0.01958584599196911,
+  "psnr_db": 17.080577850341797,
+  "ssim": 0.8128196597099304,
+  "relative_error_pct": 25.034034729003906
+}

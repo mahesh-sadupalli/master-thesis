@@ -1,0 +1,15 @@
+{
+  "model_name": "base_naive",
+  "strategy": {
+    "strategy": "naive"
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.009916902519762516,
+  "final_psnr": 20.03624153137207,
+  "final_ssim": 0.8639494776725769,
+  "final_relative_error": 18.82854461669922,
+  "total_training_time": 115.1746289730072,
+  "avg_time_per_window": 5.7587314486503605
+}

@@ -1,0 +1,17 @@
+{
+  "model_name": "base_ewc",
+  "strategy": {
+    "strategy": "ewc",
+    "ewc_lambda": 1000.0,
+    "fisher_samples": 50000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.01264052465558052,
+  "final_psnr": 18.982351303100586,
+  "final_ssim": 0.8531333208084106,
+  "final_relative_error": 21.257455825805664,
+  "total_training_time": 212.33415699005127,
+  "avg_time_per_window": 10.616707849502564
+}

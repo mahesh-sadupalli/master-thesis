@@ -1,0 +1,16 @@
+{
+  "model": "large_er",
+  "architecture": "LargeCompressor(\n  (network): Sequential(\n    (0): Linear(in_features=4, out_features=128, bias=True)\n    (1): ReLU()\n    (2): Linear(in_features=128, out_features=128, bias=True)\n    (3): ReLU()\n    (4): Linear(in_features=128, out_features=64, bias=True)\n    (5): ReLU()\n    (6): Linear(in_features=64, out_features=4, bias=True)\n  )\n)",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "parameters": 25668,
+  "loss": 0.27378836274147034,
+  "psnr_db": 5.625851631164551,
+  "ssim": 9.999999747378752e-05,
+  "relative_error_pct": 93.5981216430664
+}

@@ -2,7 +2,7 @@
 
 **Master's Thesis**
 
-> **Current Focus:** Exploring methods to prevent [catastrophic forgetting] and experimenting various techniques like Experience Replay (ER) in online training. Currently investigating autoencoder-based approaches for robust spatio-temporal compression and improved continual adaptation.
+> **Current Focus:** Continual learning experiments completed -- Experience Replay (ER-Scaled) identified as the best strategy for mitigating catastrophic forgetting in online streaming INR compression (+8.6 dB avg improvement). Next step: implementing autoencoder-based approaches for robust spatio-temporal compression and improved continual adaptation.
 
 ## Abstract
 
@@ -24,12 +24,15 @@ Modern scientific simulations generate massive amounts of streaming spatio-tempo
 
 **RQ3:** What compression performance, reconstruction accuracy, and practical applicability can neural network-based compression achieve compared to traditional methods across diverse spatio-temporal datasets?
 
+**RQ4:** Can continual learning strategies mitigate catastrophic forgetting in online streaming training, and which methods are most effective for implicit neural representation compression?
+
 ## Approach
 
 The core methodology involves training coordinate-based MLPs ([Implicit Neural Representations](https://www.vincentsitzmann.com/siren/)) to learn mappings from spatio-temporal coordinates (x, y, z, t) to flow field variables (Vx, Vy, Pressure, TKE). The network approximates complex flow patterns as continuous functions, effectively replacing large discrete datasets with a compact set of network parameters. Two training paradigms are compared:
 
 - **Offline (batch) training:** The network trains over the entire dataset with multiple epochs, establishing baseline compression performance.
 - **Online (streaming) training:** The network trains incrementally using sliding temporal windows, simulating real-time in-situ compression where data arrives sequentially.
+- **Continual learning:** Eight strategies evaluated to mitigate catastrophic forgetting in online training, spanning replay-based, regularization-based, and hybrid methods.
 
 ## Dataset Generation and Vortex Shedding Mechanics
 
@@ -177,6 +180,39 @@ All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The ne
 - **Online streaming** training suffers from **[catastrophic forgetting](https://arxiv.org/abs/2403.05175)** -- the model only remembers recent temporal windows, and larger networks are more susceptible
 - Online training metrics are misleading: per-window metrics look good, but evaluation on the full dataset reveals significant quality degradation
 
+### Continual Learning Experiments
+
+Systematic evaluation of 8 CL strategies across 3 model sizes (24 experiments) to address catastrophic forgetting:
+
+#### Executive Summary
+
+| | Base | Medium | Large | Average |
+|--|------|--------|-------|---------|
+| **Naive PSNR (dB)** | 14.76 | 12.28 | 15.05 | 14.03 |
+| **Best CL PSNR (dB)** | 22.40 | 22.81 | 22.74 | 22.65 |
+| **Best CL Strategy** | ER-Aggressive | ER-Scaled | ER-Scaled | -- |
+| **Improvement (dB)** | +7.64 | +10.53 | +7.69 | **+8.62** |
+| **Offline PSNR (dB)** | 32.15 | 33.58 | 35.99 | 33.91 |
+| **Gap to Offline (dB)** | -9.75 | -10.77 | -13.25 | -11.26 |
+
+#### CL Comparison Visualizations
+
+| PSNR Comparison | Forgetting Drop |
+|:---:|:---:|
+| ![](results/cl_comparison/cl_psnr_comparison.png) | ![](results/cl_comparison/cl_forgetting_drop.png) |
+
+| Strategy Categories | Gap to Offline |
+|:---:|:---:|
+| ![](results/cl_comparison/cl_category_comparison.png) | ![](results/cl_comparison/cl_gap_to_offline.png) |
+
+#### CL Key Findings
+
+1. **Experience Replay is the clear winner** -- ER-Scaled provides the best quality-to-cost ratio (+8.6 dB avg, only 14% overhead)
+2. **Larger models forget more** -- counter-intuitively, higher capacity worsens forgetting in naive training
+3. **Regularization methods (EWC, LwF) fail for INR compression** -- shared parameter spaces make task-specific protection impossible
+4. **LwF is actively harmful for large models** -- worse than naive due to conflicting distillation constraints
+5. **10-13 dB gap to offline remains** -- motivating future work on autoencoders and larger replay buffers
+
 ## Evaluation Metrics
 
 - **[PSNR](https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio) (Peak Signal-to-Noise Ratio):** Measures reconstruction quality in dB -- higher is better
@@ -185,6 +221,6 @@ All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001). The ne
 - **Relative Error:** L2 norm error as a percentage of the target norm
 - **Compression Ratio:** Original data size divided by model parameter size
 
-## License
+## [License](LICENSE)
 
 MIT

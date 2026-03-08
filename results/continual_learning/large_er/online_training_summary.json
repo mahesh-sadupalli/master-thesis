@@ -1,0 +1,18 @@
+{
+  "model_name": "large_er",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.0056151095777750015,
+  "final_psnr": 22.506418228149414,
+  "final_ssim": 0.8773484230041504,
+  "final_relative_error": 14.167978286743164,
+  "total_training_time": 602.6742210388184,
+  "avg_time_per_window": 30.133711051940917
+}

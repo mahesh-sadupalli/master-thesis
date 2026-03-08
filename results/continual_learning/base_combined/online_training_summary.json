@@ -1,0 +1,20 @@
+{
+  "model_name": "base_combined",
+  "strategy": {
+    "strategy": "combined",
+    "buffer_size": 10000,
+    "replay_weight": 0.3,
+    "distill_weight": 0.3,
+    "ewc_lambda": 500.0,
+    "replay_batch_size": 5000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.014425219967961311,
+  "final_psnr": 18.408775329589844,
+  "final_ssim": 0.8146095871925354,
+  "final_relative_error": 22.708580017089844,
+  "total_training_time": 210.35882592201233,
+  "avg_time_per_window": 10.517941296100616
+}

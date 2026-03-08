@@ -1,0 +1,2 @@
+model,strategy,last_window_psnr,last_window_ssim,last_window_re,full_dataset_psnr,full_dataset_ssim,full_dataset_re,psnr_drop,total_time
+large,er,22.506418228149414,0.8773484230041504,14.167978286743164,5.625851631164551,9.999999747378752e-05,93.5981216430664,16.880566596984863,602.6575632095337

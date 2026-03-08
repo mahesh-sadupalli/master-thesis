@@ -1,0 +1,18 @@
+{
+  "model_name": "medium_er",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.005741155240684748,
+  "final_psnr": 22.41000747680664,
+  "final_ssim": 0.8909160494804382,
+  "final_relative_error": 14.3261137008667,
+  "total_training_time": 539.2183818817139,
+  "avg_time_per_window": 26.960919094085693
+}

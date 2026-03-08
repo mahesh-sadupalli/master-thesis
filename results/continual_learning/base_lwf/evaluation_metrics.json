@@ -1,0 +1,14 @@
+{
+  "model": "base_lwf",
+  "architecture": "BaseCompressor(\n  (network): Sequential(\n    (0): Linear(in_features=4, out_features=64, bias=True)\n    (1): ReLU()\n    (2): Linear(in_features=64, out_features=64, bias=True)\n    (3): ReLU()\n    (4): Linear(in_features=64, out_features=32, bias=True)\n    (5): ReLU()\n    (6): Linear(in_features=32, out_features=4, bias=True)\n  )\n)",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "lwf",
+    "distill_weight": 0.5
+  },
+  "parameters": 6692,
+  "loss": 0.9715164303779602,
+  "psnr_db": 0.12549808621406555,
+  "ssim": 0.5514400601387024,
+  "relative_error_pct": 176.3131561279297
+}

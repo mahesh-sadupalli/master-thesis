@@ -1,0 +1,19 @@
+{
+  "model_name": "base_der_pp",
+  "strategy": {
+    "strategy": "der_pp",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "distill_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.014620932750403881,
+  "final_psnr": 18.350250244140625,
+  "final_ssim": 0.8159076571464539,
+  "final_relative_error": 22.86210823059082,
+  "total_training_time": 300.1802468299866,
+  "avg_time_per_window": 15.009012341499329
+}

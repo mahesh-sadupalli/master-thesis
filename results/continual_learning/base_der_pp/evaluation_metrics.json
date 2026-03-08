@@ -1,0 +1,17 @@
+{
+  "model": "base_der_pp",
+  "architecture": "BaseCompressor(\n  (network): Sequential(\n    (0): Linear(in_features=4, out_features=64, bias=True)\n    (1): ReLU()\n    (2): Linear(in_features=64, out_features=64, bias=True)\n    (3): ReLU()\n    (4): Linear(in_features=64, out_features=32, bias=True)\n    (5): ReLU()\n    (6): Linear(in_features=32, out_features=4, bias=True)\n  )\n)",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "der_pp",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "distill_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "parameters": 6692,
+  "loss": 0.01799573004245758,
+  "psnr_db": 17.448307037353516,
+  "ssim": 0.8045540452003479,
+  "relative_error_pct": 23.996305465698242
+}

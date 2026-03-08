@@ -1,0 +1,16 @@
+{
+  "model_name": "base_lwf",
+  "strategy": {
+    "strategy": "lwf",
+    "distill_weight": 0.5
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.014321042224764824,
+  "final_psnr": 18.44025421142578,
+  "final_ssim": 0.8138909339904785,
+  "final_relative_error": 22.62643051147461,
+  "total_training_time": 202.17844367027283,
+  "avg_time_per_window": 10.108922183513641
+}

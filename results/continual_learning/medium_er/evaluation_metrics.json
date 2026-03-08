@@ -1,0 +1,16 @@
+{
+  "model": "medium_er",
+  "architecture": "MediumCompressor(\n  (network): Sequential(\n    (0): Linear(in_features=4, out_features=96, bias=True)\n    (1): ReLU()\n    (2): Linear(in_features=96, out_features=96, bias=True)\n    (3): ReLU()\n    (4): Linear(in_features=96, out_features=48, bias=True)\n    (5): ReLU()\n    (6): Linear(in_features=48, out_features=4, bias=True)\n  )\n)",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 10000,
+    "replay_weight": 0.5,
+    "replay_batch_size": 5000
+  },
+  "parameters": 14644,
+  "loss": 0.252454936504364,
+  "psnr_db": 5.9781622886657715,
+  "ssim": 0.2757700979709625,
+  "relative_error_pct": 89.87763214111328
+}
