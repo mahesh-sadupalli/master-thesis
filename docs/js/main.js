@@ -26,6 +26,8 @@ APP.Main = (function () {
   var playIntervalId = null;
   var threeInitialized = false;
   var threeVisible = false;
+  var lastHoverIx = -1;
+  var lastHoverIy = -1;
 
   // ── Init ────────────────────────────────────────────────────────────────
   async function init() {
@@ -102,6 +104,11 @@ APP.Main = (function () {
     APP.CoordSystem.setFieldData(currentOrigField, state.timestep);
 
     updateMetrics();
+
+    // Re-update bit displays at last hovered point (keeps bits live during playback)
+    if (lastHoverIx >= 0) {
+      updateBitsAtPoint(lastHoverIx, lastHoverIy);
+    }
   }
 
   // ── Controls ────────────────────────────────────────────────────────────
@@ -248,26 +255,40 @@ APP.Main = (function () {
     if (!currentOrigField || !currentPredField) return;
     var grid = APP.CanvasRenderer.canvasToGrid(e.target, e.clientX, e.clientY);
     if (!grid) return;
-    var idx = grid.ix * ny + grid.iy;
-    if (cylinderMask[idx]) return;
+    if (cylinderMask[grid.ix * ny + grid.iy]) return;
+
+    // Store hovered position so playback can re-use it
+    lastHoverIx = grid.ix;
+    lastHoverIy = grid.iy;
 
     // Hide placeholder on first hover
     var ph = document.getElementById('bit-placeholder');
     if (ph) ph.style.display = 'none';
 
+    updateBitsAtPoint(lastHoverIx, lastHoverIy);
+  }
+
+  /**
+   * Update all bit displays (Inspector + Input Coords + Field Vars) for a grid point.
+   */
+  function updateBitsAtPoint(ix, iy) {
+    if (!currentOrigField || !currentPredField || !currentOrigData) return;
+    var idx = ix * ny + iy;
+
+    // Bit Inspector — current field
     var origVal = currentOrigField[idx];
     var predVal = currentPredField[idx];
     var errVal = Math.abs(origVal - predVal);
     APP.BitViz.updateVizBits(state.fieldIdx, origVal, predVal, errVal);
 
-    // Update Input Coordinates with actual (x, y, z, t) at hovered point
-    var x = gridX[grid.ix];
-    var y = gridY[grid.iy];
+    // Input Coordinates (x, y, z, t)
+    var x = gridX[ix];
+    var y = gridY[iy];
     var z = 0.0;
     var t = manifest.timesteps.values[state.timestep];
     APP.BitViz.updateRowBits('how-inputs', ['x', 'y', 'z', 't'], [x, y, z, t]);
 
-    // Update Field Variables with all 4 output values at hovered point
+    // Field Variables — all 4 outputs
     var vx  = currentOrigData[idx * 4 + 0] / 255.0;
     var vy  = currentOrigData[idx * 4 + 1] / 255.0;
     var p   = currentOrigData[idx * 4 + 2] / 255.0;
