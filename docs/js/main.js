@@ -28,6 +28,8 @@ APP.Main = (function () {
   var threeVisible = false;
   var lastHoverIx = -1;
   var lastHoverIy = -1;
+  var pinnedIx = -1;
+  var pinnedIy = -1;
 
   // ── Init ────────────────────────────────────────────────────────────────
   async function init() {
@@ -105,9 +107,10 @@ APP.Main = (function () {
 
     updateMetrics();
 
-    // Re-update bit displays at last hovered point (keeps bits live during playback)
-    if (lastHoverIx >= 0) {
-      updateBitsAtPoint(lastHoverIx, lastHoverIy);
+    // If a point is pinned, draw marker and update bits live
+    if (pinnedIx >= 0) {
+      APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
+      updateBitsAtPoint(pinnedIx, pinnedIy);
     }
   }
 
@@ -242,12 +245,14 @@ APP.Main = (function () {
     if (playIntervalId) { clearInterval(playIntervalId); playIntervalId = null; }
   }
 
-  // ── Canvas hover → bits ─────────────────────────────────────────────────
+  // ── Canvas hover + click → bits ────────────────────────────────────────
   function setupCanvasHover() {
     ['canvas-original', 'canvas-predicted', 'canvas-error'].forEach(function (id) {
       var c = document.getElementById(id);
       if (!c) return;
+      c.style.cursor = 'crosshair';
       c.addEventListener('mousemove', onCanvasHover);
+      c.addEventListener('click', onCanvasClick);
     });
   }
 
@@ -257,7 +262,6 @@ APP.Main = (function () {
     if (!grid) return;
     if (cylinderMask[grid.ix * ny + grid.iy]) return;
 
-    // Store hovered position so playback can re-use it
     lastHoverIx = grid.ix;
     lastHoverIy = grid.iy;
 
@@ -265,7 +269,66 @@ APP.Main = (function () {
     var ph = document.getElementById('bit-placeholder');
     if (ph) ph.style.display = 'none';
 
-    updateBitsAtPoint(lastHoverIx, lastHoverIy);
+    // If no pin, show bits at hover point; also draw temporary marker
+    if (pinnedIx < 0) {
+      updateBitsAtPoint(lastHoverIx, lastHoverIy);
+    }
+  }
+
+  function onCanvasClick(e) {
+    if (!currentOrigField || !currentPredField) return;
+    var grid = APP.CanvasRenderer.canvasToGrid(e.target, e.clientX, e.clientY);
+    if (!grid) return;
+    if (cylinderMask[grid.ix * ny + grid.iy]) return;
+
+    // Toggle pin: click same spot to unpin, new spot to re-pin
+    if (pinnedIx === grid.ix && pinnedIy === grid.iy) {
+      // Unpin
+      pinnedIx = -1;
+      pinnedIy = -1;
+      updatePinIndicator(false);
+      // Re-render to remove marker
+      var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
+      currentErrorField = errResult.errorField;
+    } else {
+      // Pin new point
+      pinnedIx = grid.ix;
+      pinnedIy = grid.iy;
+      updatePinIndicator(true);
+
+      // Hide placeholder
+      var ph = document.getElementById('bit-placeholder');
+      if (ph) ph.style.display = 'none';
+
+      // Draw marker and update bits
+      APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
+      updateBitsAtPoint(pinnedIx, pinnedIy);
+    }
+  }
+
+  function updatePinIndicator(pinned) {
+    var el = document.getElementById('pin-status');
+    if (!el) return;
+    if (pinned) {
+      var x = gridX[pinnedIx].toFixed(4);
+      var y = gridY[pinnedIy].toFixed(4);
+      el.innerHTML = '&#128204; Pinned at (' + x + ', ' + y + ') &mdash; <a href="#" id="unpin-link">click point or here to unpin</a>';
+      el.style.display = 'block';
+      var link = document.getElementById('unpin-link');
+      if (link) {
+        link.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          pinnedIx = -1;
+          pinnedIy = -1;
+          updatePinIndicator(false);
+          var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
+          currentErrorField = errResult.errorField;
+        });
+      }
+    } else {
+      el.innerHTML = 'Click on the flow field to pin a tracking point';
+      el.style.display = 'block';
+    }
   }
 
   /**

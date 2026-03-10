@@ -378,6 +378,24 @@ input[type="range"] { accent-color: var(--accent); }
   white-space: nowrap;
 }
 
+/* ── Pin Status ──────────────────────────────────────────────────── */
+.pin-status {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  padding: 6px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+.pin-status a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.pin-status a:hover {
+  text-decoration: underline;
+}
+
 /* ── Right Column: Info (sticky sidebar) ──────────────────────────── */
 .info-column {
   position: sticky;

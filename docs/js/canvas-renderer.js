@@ -193,10 +193,46 @@ APP.CanvasRenderer = (function () {
     return { ix: ix, iy: iy };
   }
 
+  /**
+   * Draw a tracking crosshair marker at grid position (ix, iy) on all 3 canvases.
+   */
+  function drawMarker(ix, iy) {
+    var px = ix / (nx - 1) * (renderW - 1);
+    var py = (1 - iy / (ny - 1)) * (renderH - 1);
+    var arm = 12; // crosshair arm length in canvas pixels
+
+    [ctxOriginal, ctxPredicted, ctxError].forEach(function (c) {
+      // Outer dark stroke for contrast
+      c.save();
+      c.strokeStyle = 'rgba(0,0,0,0.6)';
+      c.lineWidth = 3;
+      c.beginPath();
+      c.moveTo(px - arm, py); c.lineTo(px + arm, py);
+      c.moveTo(px, py - arm); c.lineTo(px, py + arm);
+      c.stroke();
+
+      // Inner bright stroke
+      c.strokeStyle = 'rgba(255,255,255,0.95)';
+      c.lineWidth = 1.5;
+      c.beginPath();
+      c.moveTo(px - arm, py); c.lineTo(px + arm, py);
+      c.moveTo(px, py - arm); c.lineTo(px, py + arm);
+      c.stroke();
+
+      // Small center dot
+      c.fillStyle = 'rgba(255,255,255,0.9)';
+      c.beginPath();
+      c.arc(px, py, 2, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    });
+  }
+
   return {
     init: init,
     update: update,
     canvasToGrid: canvasToGrid,
+    drawMarker: drawMarker,
     jetRGB: jetRGB,
   };
 })();
