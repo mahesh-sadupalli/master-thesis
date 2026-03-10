@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Network Compression of Spatio-Temporal Data</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ── Row 1: Title ──────────────────────────────────────────────────── -->
+  <header id="page-header">
+    <h1>Neural Network Compression of Spatio-Temporal Data</h1>
+    <p class="author">Mahesh Sadupalli</p>
+  </header>
+
+  <!-- ── Row 2: Description ────────────────────────────────────────────── -->
+  <section id="description">
+    <p>
+      This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing gigabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR of 32&ndash;36&nbsp;dB with compression ratios up to 27,395:1, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including experience replay and elastic weight consolidation are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps, serving as a representative case study for broader scientific domains including climate modelling, molecular dynamics, and structural mechanics.
+    </p>
+  </section>
+
+  <!-- ── Row 3: Navigation Bar (two rows) ──────────────────────────────── -->
+  <nav id="navbar" class="navbar">
+    <div class="nav-row">
+      <div class="nav-group">
+        <span class="nav-label">Mode</span>
+        <div class="toggle-group" id="mode-toggle">
+          <button class="toggle-btn active" data-value="offline">Offline</button>
+          <button class="toggle-btn" data-value="online">Online</button>
+        </div>
+      </div>
+      <div class="nav-group">
+        <span class="nav-label">Model</span>
+        <div class="toggle-group" id="model-toggle">
+          <button class="toggle-btn active" data-value="base">Base</button>
+          <button class="toggle-btn" data-value="medium">Medium</button>
+          <button class="toggle-btn" data-value="large">Large</button>
+        </div>
+      </div>
+      <div class="nav-group">
+        <span class="nav-label">Field</span>
+        <select id="field-select">
+          <option value="0">Vx</option>
+          <option value="1">Vy</option>
+          <option value="2">Pressure</option>
+          <option value="3">TKE</option>
+        </select>
+      </div>
+      <div class="nav-spacer"></div>
+      <div class="nav-group nav-metrics">
+        <span class="nav-metric"><b id="metric-psnr">--</b> <small>dB PSNR</small></span>
+        <span class="nav-metric"><b id="metric-ssim">--</b> <small>SSIM</small></span>
+        <span class="nav-metric"><b id="metric-error">--</b><small>% error</small></span>
+        <span class="nav-metric"><b id="metric-params">--</b> <small>params</small></span>
+        <span class="nav-metric"><b id="metric-size">--</b> <small>KB</small></span>
+        <span class="nav-metric"><b id="metric-cr">--</b><small>:1</small></span>
+      </div>
+    </div>
+    <div class="nav-row">
+      <div class="nav-group">
+        <button id="play-btn" class="play-btn" title="Play/Pause">&#9654; Play</button>
+      </div>
+      <div class="nav-group nav-timeline">
+        <span class="nav-label">Timestep</span>
+        <input type="range" id="timeline-slider" min="0" max="29" value="0" step="1">
+        <span id="timestep-label" class="slider-label">0 / 29</span>
+      </div>
+      <div class="nav-group">
+        <span class="nav-label">Speed</span>
+        <input type="range" id="speed-slider" min="0.5" max="5" value="1" step="0.5" class="speed-range">
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Row 4: Coordinate System + Bit Visualization ──────────────────── -->
+  <section id="coord-section">
+    <div class="coord-grid">
+      <!-- Left: Interactive coordinate system -->
+      <div class="coord-panel">
+        <h3>Data Distribution <span class="dim-text">&mdash; 7.9M points in (x, y, z, t) space</span></h3>
+        <canvas id="coord-canvas" width="560" height="360"></canvas>
+        <div class="coord-controls">
+          <span class="nav-label">Projection</span>
+          <div class="toggle-group" id="coord-proj-toggle">
+            <button class="toggle-btn active" data-value="xy">X-Y</button>
+            <button class="toggle-btn" data-value="xt">X-T</button>
+            <button class="toggle-btn" data-value="yt">Y-T</button>
+          </div>
+          <span class="nav-label">Color</span>
+          <div class="toggle-group" id="coord-color-toggle">
+            <button class="toggle-btn active" data-value="field">Field</button>
+            <button class="toggle-btn" data-value="time">Time</button>
+          </div>
+        </div>
+      </div>
+      <!-- Right: Bit visualization -->
+      <div class="bit-panel">
+        <div class="bit-block">
+          <h3>Input Coordinates <span class="dim-text">(x, y, z, t) &times; 64 bits</span></h3>
+          <div id="how-inputs" class="bit-rows"></div>
+        </div>
+        <div class="bit-block">
+          <h3>Field Variables <span class="dim-text">(Vx, Vy, P, TKE) &times; 64 bits</span></h3>
+          <div id="how-outputs" class="bit-rows"></div>
+        </div>
+        <div class="bit-legend">
+          <span><span class="bit-swatch sign"></span> Sign (1)</span>
+          <span><span class="bit-swatch exp"></span> Exponent (11)</span>
+          <span><span class="bit-swatch mant"></span> Mantissa (52)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Row 5: Animations ─────────────────────────────────────────────── -->
+  <section id="viz-section">
+    <div id="loading-overlay">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+
+    <div class="viz-grid">
+      <div class="viz-col-main">
+        <!-- Original -->
+        <div class="viz-row">
+          <div class="viz-row-header">
+            <span class="viz-row-title">Original</span>
+            <div class="viz-bits-inline" id="bits-original"></div>
+          </div>
+          <div class="viz-canvas-wrap">
+            <canvas id="canvas-original" class="viz-canvas"></canvas>
+          </div>
+        </div>
+        <!-- Predicted -->
+        <div class="viz-row">
+          <div class="viz-row-header">
+            <span class="viz-row-title">Predicted</span>
+            <div class="viz-bits-inline" id="bits-predicted"></div>
+          </div>
+          <div class="viz-canvas-wrap">
+            <canvas id="canvas-predicted" class="viz-canvas"></canvas>
+          </div>
+        </div>
+        <!-- Error -->
+        <div class="viz-row">
+          <div class="viz-row-header">
+            <span class="viz-row-title">Absolute Error</span>
+            <div class="viz-bits-inline" id="bits-error"></div>
+          </div>
+          <div class="viz-canvas-wrap">
+            <canvas id="canvas-error" class="viz-canvas"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="viz-col-cbars">
+        <div class="cbar-block"><canvas id="cbar-original" width="14" height="1"></canvas><div class="cbar-ticks"><span>1</span><span>0</span></div></div>
+        <div class="cbar-block"><canvas id="cbar-predicted" width="14" height="1"></canvas><div class="cbar-ticks"><span>1</span><span>0</span></div></div>
+        <div class="cbar-block"><canvas id="cbar-error" width="14" height="1"></canvas><div class="cbar-ticks"><span id="err-max">0.1</span><span>0</span></div></div>
+      </div>
+    </div>
+
+    <!-- 3D View -->
+    <div id="three-section">
+      <div class="viz-row">
+        <div class="viz-row-header">
+          <span class="viz-row-title">3D Surface (Predicted)</span>
+        </div>
+        <div id="three-container">
+          <canvas id="three-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────────────────── -->
+  <footer>
+    <p>Master Thesis &mdash; BTU Cottbus-Senftenberg &bull; M.Sc. Artificial Intelligence</p>
+  </footer>
+
+  <script src="lib/three.min.js?v=5"></script>
+  <script src="lib/OrbitControls.js?v=5"></script>
+  <script src="js/data-loader.js?v=5"></script>
+  <script src="js/bit-visualization.js?v=5"></script>
+  <script src="js/canvas-renderer.js?v=5"></script>
+  <script src="js/coord-system.js?v=5"></script>
+  <script src="js/three-scene.js?v=5"></script>
+  <script src="js/main.js?v=6"></script>
+</body>
+</html>
