@@ -8,7 +8,7 @@
   <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
   <meta property="og:description" content="Interactive fluid dynamics compression visualization — PSNR up to 36 dB with 27,395:1 compression ratio.">
   <meta property="og:type" content="website">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 
@@ -42,8 +42,8 @@
       <div class="control-group">
         <span class="control-label">Mode</span>
         <div class="toggle-group" id="mode-toggle">
-          <button class="toggle-btn active" data-value="offline">Offline</button>
-          <button class="toggle-btn" data-value="online">Online</button>
+          <button class="toggle-btn active" data-value="offline">Batch</button>
+          <button class="toggle-btn" data-value="online">Continual</button>
         </div>
       </div>
       <div class="control-group">
@@ -62,6 +62,13 @@
           <option value="2">Pressure</option>
           <option value="3">TKE</option>
         </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">View</span>
+        <div class="toggle-group" id="view-toggle">
+          <button class="toggle-btn active" data-value="2d">2D</button>
+          <button class="toggle-btn" data-value="3d">3D</button>
+        </div>
       </div>
       <div class="control-spacer"></div>
       <div class="control-group playback-group">
@@ -108,55 +115,63 @@
 
       <!-- ── Left Column: Stacked Animations ──────────────────────────── -->
       <div class="anim-column">
-        <div id="pin-status" class="pin-status">Click on the flow field to pin a tracking point</div>
-        <!-- Original -->
-        <div class="viz-panel">
-          <div class="viz-panel-header">
-            <span class="viz-panel-title">Original</span>
-          </div>
-          <div class="viz-panel-body">
-            <div class="viz-canvas-wrap">
-              <canvas id="canvas-original" class="viz-canvas"></canvas>
+        <div id="two-d-view">
+          <div id="pin-status" class="pin-status">Click on the flow field to pin a tracking point</div>
+          <!-- Original -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Original</span>
             </div>
-            <div class="viz-cbar">
-              <span class="cbar-tick">1</span>
-              <canvas id="cbar-original" width="14" height="1"></canvas>
-              <span class="cbar-tick">0</span>
+            <div class="viz-panel-body">
+              <div class="viz-canvas-wrap">
+                <canvas id="canvas-original" class="viz-canvas"></canvas>
+              </div>
+              <div class="viz-cbar">
+                <span class="cbar-tick">1</span>
+                <canvas id="cbar-original" width="14" height="1"></canvas>
+                <span class="cbar-tick">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predicted -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Predicted</span>
+            </div>
+            <div class="viz-panel-body">
+              <div class="viz-canvas-wrap">
+                <canvas id="canvas-predicted" class="viz-canvas"></canvas>
+              </div>
+              <div class="viz-cbar">
+                <span class="cbar-tick">1</span>
+                <canvas id="cbar-predicted" width="14" height="1"></canvas>
+                <span class="cbar-tick">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Absolute Error -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Absolute Error</span>
+            </div>
+            <div class="viz-panel-body">
+              <div class="viz-canvas-wrap">
+                <canvas id="canvas-error" class="viz-canvas"></canvas>
+              </div>
+              <div class="viz-cbar">
+                <span class="cbar-tick" id="err-max">0.1</span>
+                <canvas id="cbar-error" width="14" height="1"></canvas>
+                <span class="cbar-tick">0</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Predicted -->
-        <div class="viz-panel">
-          <div class="viz-panel-header">
-            <span class="viz-panel-title">Predicted</span>
-          </div>
-          <div class="viz-panel-body">
-            <div class="viz-canvas-wrap">
-              <canvas id="canvas-predicted" class="viz-canvas"></canvas>
-            </div>
-            <div class="viz-cbar">
-              <span class="cbar-tick">1</span>
-              <canvas id="cbar-predicted" width="14" height="1"></canvas>
-              <span class="cbar-tick">0</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Absolute Error -->
-        <div class="viz-panel">
-          <div class="viz-panel-header">
-            <span class="viz-panel-title">Absolute Error</span>
-          </div>
-          <div class="viz-panel-body">
-            <div class="viz-canvas-wrap">
-              <canvas id="canvas-error" class="viz-canvas"></canvas>
-            </div>
-            <div class="viz-cbar">
-              <span class="cbar-tick" id="err-max">0.1</span>
-              <canvas id="cbar-error" width="14" height="1"></canvas>
-              <span class="cbar-tick">0</span>
-            </div>
+        <div id="three-view" class="view-hidden">
+          <div id="three-container">
+            <canvas id="three-canvas"></canvas>
           </div>
         </div>
       </div>
@@ -223,21 +238,6 @@
     </div>
   </section>
 
-  <!-- ── 3D Surface (collapsible) ────────────────────────────────────── -->
-  <section id="three-section">
-    <div class="section-toggle-bar">
-      <button class="section-toggle-btn" id="toggle-3d">3D Surface View &darr;</button>
-    </div>
-    <div class="collapsible-content collapsed" id="three-collapsible">
-      <div class="three-panel">
-        <h3>3D Surface <span class="dim-text">&mdash; Predicted field as height map</span></h3>
-        <div id="three-container">
-          <canvas id="three-canvas"></canvas>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
   <footer>
     <p>Master Thesis &mdash; BTU Cottbus-Senftenberg &bull; M.Sc. Artificial Intelligence</p>
@@ -249,7 +249,7 @@
   <script src="js/bit-visualization.js?v=8"></script>
   <script src="js/canvas-renderer.js?v=9"></script>
   <script src="js/coord-system.js?v=8"></script>
-  <script src="js/three-scene.js?v=8"></script>
-  <script src="js/main.js?v=12"></script>
+  <script src="js/three-scene.js?v=9"></script>
+  <script src="js/main.js?v=13"></script>
 </body>
 </html>

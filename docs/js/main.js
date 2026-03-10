@@ -13,6 +13,7 @@ APP.Main = (function () {
     timestep: 0,
     playing: false,
     speed: 1,
+    view: '2d',
   };
 
   var manifest;
@@ -57,7 +58,7 @@ APP.Main = (function () {
       setupControls();
       setupCanvasHover();
       setupAbstractToggle();
-      setup3DToggle();
+      setupViewToggle();
 
       await loadAndDisplay();
 
@@ -192,42 +193,57 @@ APP.Main = (function () {
     });
   }
 
-  // ── 3D Surface Toggle ─────────────────────────────────────────────────
-  function setup3DToggle() {
-    var btn = document.getElementById('toggle-3d');
-    if (!btn) return;
+  // ── View Toggle (2D / 3D) ─────────────────────────────────────────────
+  function setupViewToggle() {
+    setupToggle('view-toggle', function (val) {
+      state.view = val;
+      applyViewMode();
+    });
+  }
 
-    btn.addEventListener('click', function () {
-      var content = document.getElementById('three-collapsible');
-      var isCollapsed = content.classList.contains('collapsed');
+  function applyViewMode() {
+    var twoDView = document.getElementById('two-d-view');
+    var threeView = document.getElementById('three-view');
 
-      if (isCollapsed) {
-        // Expand
-        content.classList.remove('collapsed');
-        btn.classList.add('active');
-        btn.innerHTML = '3D Surface View &uarr;';
-        threeVisible = true;
+    if (state.view === '3d') {
+      twoDView.classList.add('view-hidden');
+      threeView.classList.remove('view-hidden');
+      threeVisible = true;
 
-        if (!threeInitialized) {
-          APP.ThreeScene.init(nx, ny, gridX, gridY, cylinderMask);
-          threeInitialized = true;
-        }
-        APP.ThreeScene.show();
-        if (currentPredField) {
-          APP.ThreeScene.updateSurface(currentPredField);
-        }
-      } else {
-        // Collapse
-        content.classList.add('collapsed');
-        btn.classList.remove('active');
-        btn.innerHTML = '3D Surface View &darr;';
-        threeVisible = false;
+      if (!threeInitialized) {
+        APP.ThreeScene.init(nx, ny, gridX, gridY, cylinderMask);
+        threeInitialized = true;
+      }
+      APP.ThreeScene.show();
+      if (currentPredField) {
+        APP.ThreeScene.updateSurface(currentPredField);
+      }
 
-        if (threeInitialized) {
-          APP.ThreeScene.stopLoop();
+      // Unpin tracking point in 3D mode
+      if (pinnedIx >= 0) {
+        pinnedIx = -1;
+        pinnedIy = -1;
+        updatePinIndicator(false);
+      }
+    } else {
+      threeView.classList.add('view-hidden');
+      twoDView.classList.remove('view-hidden');
+      threeVisible = false;
+
+      if (threeInitialized) {
+        APP.ThreeScene.hide();
+      }
+
+      // Re-render 2D canvases
+      if (currentOrigField && currentPredField) {
+        var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
+        currentErrorField = errResult.errorField;
+        if (pinnedIx >= 0) {
+          APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
+          updateBitsAtPoint(pinnedIx, pinnedIy);
         }
       }
-    });
+    }
   }
 
   // ── Playback ────────────────────────────────────────────────────────────

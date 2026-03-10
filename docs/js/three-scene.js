@@ -138,7 +138,7 @@ APP.ThreeScene = (function () {
   }
 
   function onResize() {
-    if (!active || !container) return;
+    if (!renderer || !container) return;
     var w = container.clientWidth;
     var h = container.clientHeight || 500;
     camera.aspect = w / h;
@@ -147,13 +147,11 @@ APP.ThreeScene = (function () {
   }
 
   function show() {
-    container.classList.remove('hidden');
     onResize();
     startLoop();
   }
 
   function hide() {
-    container.classList.add('hidden');
     stopLoop();
   }
 

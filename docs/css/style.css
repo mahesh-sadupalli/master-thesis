@@ -551,68 +551,30 @@ input[type="range"] { accent-color: var(--accent); }
 
 .coord-color-label { margin-left: 6px; }
 
-/* ── 3D Surface (collapsible) ─────────────────────────────────────── */
-#three-section {
-  max-width: var(--content-max);
-  margin: 0 auto;
-  padding: 0 var(--pad) 32px;
-}
+/* ── View toggle (2D / 3D) ───────────────────────────────────────── */
+.view-hidden { display: none !important; }
 
-.section-toggle-bar {
+#two-d-view {
   display: flex;
-  justify-content: center;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.section-toggle-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
-  padding: 10px 28px;
-  border-radius: var(--radius);
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.2s;
-}
-.section-toggle-btn:hover {
-  border-color: var(--accent);
-  color: var(--text);
-}
-.section-toggle-btn.active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.collapsible-content {
-  overflow: hidden;
-  max-height: 600px;
-  transition: max-height 0.5s ease;
-}
-.collapsible-content.collapsed {
-  max-height: 0;
-}
-
-.three-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-}
-
-.three-panel h3 {
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 16px;
+#three-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 #three-container {
   width: 100%;
-  height: 420px;
-  border-radius: var(--radius-sm);
+  height: 70vh;
+  min-height: 400px;
+  max-height: 900px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--bg);
+  border: 1px solid var(--border);
 }
 
 #three-container canvas {
