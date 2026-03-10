@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Neural Network Compression of Spatio-Temporal Data</title>
+  <meta name="description" content="Interactive visualization of coordinate-based neural networks compressing streaming CFD simulation data. Compare offline and online training with IEEE 754 bit-level inspection.">
+  <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
+  <meta property="og:description" content="Interactive fluid dynamics compression visualization — PSNR up to 36 dB with 27,395:1 compression ratio.">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -27,7 +31,7 @@
   <section id="description" class="collapsed">
     <div class="abstract-inner">
       <p>
-        This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing gigabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR of 32&ndash;36&nbsp;dB with compression ratios up to 27,395:1, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including experience replay and elastic weight consolidation are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps.
+        This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing gigabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR of 32&ndash;36&nbsp;dB with compression ratios up to 27,395:1, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including experience replay and elastic weight consolidation are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps (30 representative timesteps visualized here).
       </p>
     </div>
   </section>
@@ -162,6 +166,7 @@
         <!-- Live Bit Inspector -->
         <div class="info-panel bit-inspector">
           <h3>Bit Inspector <span class="dim-text">&mdash; hover over canvas</span></h3>
+          <p class="bit-placeholder" id="bit-placeholder">Move your cursor over the fluid visualization to inspect IEEE&nbsp;754 bit patterns at any point.</p>
           <div class="bit-section">
             <span class="bit-section-label">Original</span>
             <div id="bits-original" class="bit-rows"></div>
@@ -204,7 +209,7 @@
               <button class="toggle-btn" data-value="xt">X-T</button>
               <button class="toggle-btn" data-value="yt">Y-T</button>
             </div>
-            <span class="control-label" style="margin-left:6px">Color</span>
+            <span class="control-label coord-color-label">Color</span>
             <div class="toggle-group" id="coord-color-toggle">
               <button class="toggle-btn active" data-value="field">Field</button>
               <button class="toggle-btn" data-value="time">Time</button>

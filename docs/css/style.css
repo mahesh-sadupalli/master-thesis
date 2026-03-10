@@ -419,6 +419,14 @@ input[type="range"] { accent-color: var(--accent); }
   background: linear-gradient(135deg, var(--bg-card), rgba(79, 195, 247, 0.03));
 }
 
+.bit-placeholder {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 6px;
+  font-style: italic;
+}
+
 .bit-section {
   margin-bottom: 8px;
 }
@@ -463,31 +471,34 @@ input[type="range"] { accent-color: var(--accent); }
 .bit-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   margin-bottom: 5px;
 }
 
 .bit-row-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
-  min-width: 20px;
+  min-width: 18px;
   text-align: right;
+  flex-shrink: 0;
 }
 
 .bit-row-value {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: var(--accent);
-  min-width: 64px;
+  min-width: 50px;
+  flex-shrink: 0;
 }
 
-.bit-boxes { display: flex; gap: 1px; }
+.bit-boxes { display: flex; gap: 1px; flex-shrink: 1; min-width: 0; }
 
 .bit-box {
-  width: 4px;
-  height: 11px;
+  width: 3px;
+  height: 10px;
   border-radius: 1px;
+  flex-shrink: 0;
 }
 .bit-box.sign { background: var(--bit-sign); }
 .bit-box.exp  { background: var(--bit-exp); }
@@ -513,6 +524,8 @@ input[type="range"] { accent-color: var(--accent); }
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.coord-color-label { margin-left: 6px; }
 
 /* ── 3D Surface (collapsible) ─────────────────────────────────────── */
 #three-section {

@@ -251,6 +251,10 @@ APP.Main = (function () {
     var idx = grid.ix * ny + grid.iy;
     if (cylinderMask[idx]) return;
 
+    // Hide placeholder on first hover
+    var ph = document.getElementById('bit-placeholder');
+    if (ph) ph.style.display = 'none';
+
     var origVal = currentOrigField[idx];
     var predVal = currentPredField[idx];
     var errVal = Math.abs(origVal - predVal);
