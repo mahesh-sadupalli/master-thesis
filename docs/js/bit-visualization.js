@@ -55,6 +55,7 @@ APP.BitViz = (function () {
       if (i === 0)      box.classList.add('sign');
       else if (i < 12)  box.classList.add('exp');
       else               box.classList.add('mant');
+      if (bits[i] === '0') box.classList.add('bit-off');
       box.title = (i === 0 ? 'Sign' : i < 12 ? 'Exponent' : 'Mantissa') +
                   ' [' + i + '] = ' + bits[i];
       container.appendChild(box);

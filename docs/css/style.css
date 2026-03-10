@@ -500,9 +500,15 @@ input[type="range"] { accent-color: var(--accent); }
   border-radius: 1px;
   flex-shrink: 0;
 }
+/* Bit = 1: bright color */
 .bit-box.sign { background: var(--bit-sign); }
 .bit-box.exp  { background: var(--bit-exp); }
 .bit-box.mant { background: var(--bit-mant); }
+
+/* Bit = 0: dim color */
+.bit-box.bit-off.sign { background: rgba(239, 83, 80, 0.15); }
+.bit-box.bit-off.exp  { background: rgba(66, 165, 245, 0.15); }
+.bit-box.bit-off.mant { background: rgba(102, 187, 106, 0.15); }
 
 /* ── Coordinate System ────────────────────────────────────────────── */
 .coord-panel h3 {
