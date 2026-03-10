@@ -259,6 +259,20 @@ APP.Main = (function () {
     var predVal = currentPredField[idx];
     var errVal = Math.abs(origVal - predVal);
     APP.BitViz.updateVizBits(state.fieldIdx, origVal, predVal, errVal);
+
+    // Update Input Coordinates with actual (x, y, z, t) at hovered point
+    var x = gridX[grid.ix];
+    var y = gridY[grid.iy];
+    var z = 0.0;
+    var t = manifest.timesteps.values[state.timestep];
+    APP.BitViz.updateRowBits('how-inputs', ['x', 'y', 'z', 't'], [x, y, z, t]);
+
+    // Update Field Variables with all 4 output values at hovered point
+    var vx  = currentOrigData[idx * 4 + 0] / 255.0;
+    var vy  = currentOrigData[idx * 4 + 1] / 255.0;
+    var p   = currentOrigData[idx * 4 + 2] / 255.0;
+    var tke = currentOrigData[idx * 4 + 3] / 255.0;
+    APP.BitViz.updateRowBits('how-outputs', ['Vx', 'Vy', 'P', 'TKE'], [vx, vy, p, tke]);
   }
 
   // ── Boot ────────────────────────────────────────────────────────────────
