@@ -24,6 +24,8 @@ APP.Main = (function () {
   var currentOrigData = null;
   var currentPredData = null;
   var playIntervalId = null;
+  var threeInitialized = false;
+  var threeVisible = false;
 
   // ── Init ────────────────────────────────────────────────────────────────
   async function init() {
@@ -40,20 +42,18 @@ APP.Main = (function () {
       // 2D renderer
       APP.CanvasRenderer.init(nx, ny, cylinderMask);
 
-      // 3D scene
-      APP.ThreeScene.init(nx, ny, gridX, gridY, cylinderMask);
-      APP.ThreeScene.show();
-
       // Coordinate system scatter plot
       APP.CoordSystem.init(nx, ny, gridX, gridY, cylinderMask, manifest);
 
-      // Bit viz (How It Works)
+      // Bit viz
       APP.BitViz.initHowItWorks();
 
       document.getElementById('timeline-slider').max = manifest.timesteps.count - 1;
 
       setupControls();
       setupCanvasHover();
+      setupAbstractToggle();
+      setup3DToggle();
 
       await loadAndDisplay();
 
@@ -93,8 +93,10 @@ APP.Main = (function () {
     var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
     currentErrorField = errResult.errorField;
 
-    // 3D surface
-    APP.ThreeScene.updateSurface(currentPredField);
+    // 3D surface (only if initialized and visible)
+    if (threeInitialized && threeVisible) {
+      APP.ThreeScene.updateSurface(currentPredField);
+    }
 
     // Coordinate system coloring
     APP.CoordSystem.setFieldData(currentOrigField, state.timestep);
@@ -165,6 +167,57 @@ APP.Main = (function () {
     document.getElementById('metric-params').textContent = m.params.toLocaleString();
     document.getElementById('metric-size').textContent = m.size_kb.toFixed(1);
     document.getElementById('metric-cr').textContent = m.cr.toLocaleString();
+  }
+
+  // ── Abstract Toggle ────────────────────────────────────────────────────
+  function setupAbstractToggle() {
+    var btn = document.getElementById('abstract-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var desc = document.getElementById('description');
+      desc.classList.toggle('collapsed');
+      btn.innerHTML = desc.classList.contains('collapsed')
+        ? 'Abstract &darr;'
+        : 'Abstract &uarr;';
+    });
+  }
+
+  // ── 3D Surface Toggle ─────────────────────────────────────────────────
+  function setup3DToggle() {
+    var btn = document.getElementById('toggle-3d');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+      var content = document.getElementById('three-collapsible');
+      var isCollapsed = content.classList.contains('collapsed');
+
+      if (isCollapsed) {
+        // Expand
+        content.classList.remove('collapsed');
+        btn.classList.add('active');
+        btn.innerHTML = '3D Surface View &uarr;';
+        threeVisible = true;
+
+        if (!threeInitialized) {
+          APP.ThreeScene.init(nx, ny, gridX, gridY, cylinderMask);
+          threeInitialized = true;
+        }
+        APP.ThreeScene.show();
+        if (currentPredField) {
+          APP.ThreeScene.updateSurface(currentPredField);
+        }
+      } else {
+        // Collapse
+        content.classList.add('collapsed');
+        btn.classList.remove('active');
+        btn.innerHTML = '3D Surface View &darr;';
+        threeVisible = false;
+
+        if (threeInitialized) {
+          APP.ThreeScene.stopLoop();
+        }
+      }
+    });
   }
 
   // ── Playback ────────────────────────────────────────────────────────────
