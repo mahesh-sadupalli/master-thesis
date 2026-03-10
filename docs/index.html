@@ -8,7 +8,7 @@
   <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
   <meta property="og:description" content="Interactive fluid dynamics compression visualization — PSNR up to 36 dB with 27,395:1 compression ratio.">
   <meta property="og:type" content="website">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
 </head>
 <body>
 
@@ -170,8 +170,38 @@
         </div>
 
         <div id="three-view" class="view-hidden">
-          <div id="three-container">
-            <canvas id="three-canvas"></canvas>
+          <!-- Original -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Original</span>
+            </div>
+            <div class="viz-panel-body">
+              <div class="three-canvas-wrap">
+                <canvas id="three-canvas-original"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Predicted -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Predicted</span>
+            </div>
+            <div class="viz-panel-body">
+              <div class="three-canvas-wrap">
+                <canvas id="three-canvas-predicted"></canvas>
+              </div>
+            </div>
+          </div>
+          <!-- Absolute Error -->
+          <div class="viz-panel">
+            <div class="viz-panel-header">
+              <span class="viz-panel-title">Absolute Error</span>
+            </div>
+            <div class="viz-panel-body">
+              <div class="three-canvas-wrap">
+                <canvas id="three-canvas-error"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -249,7 +279,7 @@
   <script src="js/bit-visualization.js?v=8"></script>
   <script src="js/canvas-renderer.js?v=9"></script>
   <script src="js/coord-system.js?v=8"></script>
-  <script src="js/three-scene.js?v=9"></script>
-  <script src="js/main.js?v=13"></script>
+  <script src="js/three-scene.js?v=10"></script>
+  <script src="js/main.js?v=14"></script>
 </body>
 </html>

@@ -22,6 +22,7 @@ APP.Main = (function () {
   var currentOrigField = null;
   var currentPredField = null;
   var currentErrorField = null;
+  var lastMaxErr = 1;
   var currentOrigData = null;
   var currentPredData = null;
   var playIntervalId = null;
@@ -94,13 +95,14 @@ APP.Main = (function () {
     currentOrigField = APP.DataLoader.extractField(currentOrigData, state.fieldIdx, nx, ny);
     currentPredField = APP.DataLoader.extractField(currentPredData, state.fieldIdx, nx, ny);
 
-    // 2D canvases
+    // 2D canvases (compute error before 3D so we have maxErr)
     var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
     currentErrorField = errResult.errorField;
+    lastMaxErr = errResult.maxErr;
 
-    // 3D surface (only if initialized and visible)
+    // 3D surfaces (only if initialized and visible)
     if (threeInitialized && threeVisible) {
-      APP.ThreeScene.updateSurface(currentPredField);
+      APP.ThreeScene.updateSurfaces(currentOrigField, currentPredField, currentErrorField, lastMaxErr);
     }
 
     // Coordinate system coloring
@@ -215,8 +217,8 @@ APP.Main = (function () {
         threeInitialized = true;
       }
       APP.ThreeScene.show();
-      if (currentPredField) {
-        APP.ThreeScene.updateSurface(currentPredField);
+      if (currentOrigField && currentPredField && currentErrorField) {
+        APP.ThreeScene.updateSurfaces(currentOrigField, currentPredField, currentErrorField, lastMaxErr);
       }
 
       // Unpin tracking point in 3D mode
