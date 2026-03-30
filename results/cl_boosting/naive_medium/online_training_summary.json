@@ -1,0 +1,15 @@
+{
+  "model_name": "medium",
+  "strategy": {
+    "strategy": "naive"
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.007205718196928501,
+  "final_psnr": 21.423227310180664,
+  "final_ssim": 0.8748083710670471,
+  "final_relative_error": 16.04971694946289,
+  "total_training_time": 71.58882522583008,
+  "avg_time_per_window": 3.579441261291504
+}

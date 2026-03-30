@@ -79,11 +79,21 @@ Conv2D autoencoders operating on 32×128 interpolated field grids:
 | | Medium | 32.75 | 0.9723 | 4.10 | 23.9:1 | 16.4s |
 | | Large | 32.75 | 0.9704 | 4.10 | 16.9:1 | 16.6s |
 
+### Comparison Across All Methods
+
+| PSNR | SSIM |
+|:---:|:---:|
+| ![](results/comparison_all_methods/psnr.png) | ![](results/comparison_all_methods/ssim.png) |
+
+| Loss | Relative Error |
+|:---:|:---:|
+| ![](results/comparison_all_methods/loss.png) | ![](results/comparison_all_methods/relative_error.png) |
+
 ### Flow Field Reconstructions -- Batch Learning (Offline)
 
 | Base (31.24 dB) | Medium (34.18 dB) | Large (35.72 dB) |
 |:---:|:---:|:---:|
-| ![](results/base_model_offline/base_flow_visualization.png) | ![](results/medium_model_offline/medium_offline_visualization.png) | ![](results/large_model_offline/large_model_visualization.png) |
+| ![](results/batch_learning/base_model_offline/base_flow_visualization.png) | ![](results/batch_learning/medium_model_offline/medium_flow_visualization.png) | ![](results/batch_learning/large_model_offline/large_flow_visualization.png) |
 
 ### Flow Field Reconstructions -- Continual Learning (Naive Online)
 
@@ -91,19 +101,29 @@ Full-dataset evaluation reveals severe quality degradation due to catastrophic f
 
 | Base (17.32 dB) | Medium (15.21 dB) | Large (14.45 dB) |
 |:---:|:---:|:---:|
-| ![](results/base_model_online/base_online_visualization.png) | ![](results/medium_model_online/medium_online_visualization.png) | ![](results/large_model_online/large_online_visualization.png) |
+| ![](results/continual_learning/base_model_online/base_online_visualization.png) | ![](results/continual_learning/medium_model_online/medium_online_visualization.png) | ![](results/continual_learning/large_model_online/large_online_visualization.png) |
 
-### Flow Field Reconstructions -- Continual Learning (CL Comparison)
+### Flow Field Reconstructions -- Experience Replay
 
-| PSNR Comparison | Gap to Offline |
+| Naive | ER Scaled | ER Aggressive |
+|:---:|:---:|:---:|
+| ![](results/cl_boosting/naive_flow_field.png) | ![](results/cl_boosting/er_scaled_flow_field.png) | ![](results/cl_boosting/er_aggressive_flow_field.png) |
+
+| PSNR per Window | Gap to Offline |
 |:---:|:---:|
-| ![](results/cl_comparison/cl_psnr_comparison.png) | ![](results/cl_comparison/cl_gap_to_offline.png) |
+| ![](results/cl_boosting/comparison_cl/cl_psnr_per_window.png) | ![](results/cl_boosting/comparison_cl/cl_gap_to_offline.png) |
 
-| | Naive (No CL) | Best CL Strategy |
-|:---|:---:|:---:|
-| **Base** (14.76 → 22.40 dB) | ![](results/cl_comparison/flow_field_base_naive.png) | ![](results/cl_comparison/flow_field_base_best.png) |
-| **Medium** (12.28 → 22.81 dB) | ![](results/cl_comparison/flow_field_medium_naive.png) | ![](results/cl_comparison/flow_field_medium_best.png) |
-| **Large** (15.05 → 22.74 dB) | ![](results/cl_comparison/flow_field_large_naive.png) | ![](results/cl_comparison/flow_field_large_best.png) |
+### Flow Field Reconstructions -- Linear Autoencoder
+
+| Base (36.23 dB) | Medium (37.90 dB) | Large (37.94 dB) |
+|:---:|:---:|:---:|
+| ![](results/autoencoder/linear_ae/base_autoencoder/base_ae_flow_visualization.png) | ![](results/autoencoder/linear_ae/medium_autoencoder/medium_ae_flow_visualization.png) | ![](results/autoencoder/linear_ae/large_autoencoder/large_ae_flow_visualization.png) |
+
+### Flow Field Reconstructions -- Convolutional Autoencoder
+
+| Base (30.67 dB) | Medium (32.75 dB) | Large (32.75 dB) |
+|:---:|:---:|:---:|
+| ![](results/autoencoder/conv2d/base/base_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/medium/medium_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/large/large_conv_ae_flow_visualization.png) |
 
 ## Key Findings
 

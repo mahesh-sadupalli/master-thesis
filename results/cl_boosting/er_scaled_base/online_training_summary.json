@@ -1,0 +1,17 @@
+{
+  "model_name": "base",
+  "strategy": {
+    "strategy": "er_scaled",
+    "buffer_size": 50000,
+    "replay_weight": 0.7
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.00777741614729166,
+  "final_psnr": 21.09164810180664,
+  "final_ssim": 0.8668296933174133,
+  "final_relative_error": 16.67425537109375,
+  "total_training_time": 49.93814444541931,
+  "avg_time_per_window": 2.4969072222709654
+}

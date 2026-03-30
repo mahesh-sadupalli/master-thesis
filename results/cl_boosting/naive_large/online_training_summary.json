@@ -1,0 +1,15 @@
+{
+  "model_name": "large",
+  "strategy": {
+    "strategy": "naive"
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.00585534842684865,
+  "final_psnr": 22.324474334716797,
+  "final_ssim": 0.8928686380386353,
+  "final_relative_error": 14.467887878417969,
+  "total_training_time": 85.27279257774353,
+  "avg_time_per_window": 4.2636396288871765
+}

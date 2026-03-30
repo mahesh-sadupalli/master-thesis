@@ -1,0 +1,12 @@
+{
+  "model_name": "large_model",
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.006283984985202551,
+  "final_psnr": 22.017648696899414,
+  "final_ssim": 0.8792372941970825,
+  "final_relative_error": 14.988090515136719,
+  "total_training_time": 84.57387685775757,
+  "avg_time_per_window": 4.228693842887878
+}

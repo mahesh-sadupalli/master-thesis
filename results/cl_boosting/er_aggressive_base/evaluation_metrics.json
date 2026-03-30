@@ -1,0 +1,9 @@
+{
+  "model": "base",
+  "strategy": "er_aggressive",
+  "parameters": 6692,
+  "psnr_db": 21.596073150634766,
+  "ssim": 0.8957814574241638,
+  "relative_error_pct": 14.855252265930176,
+  "training_time_s": 59.42711925506592
+}

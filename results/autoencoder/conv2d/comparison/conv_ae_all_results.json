@@ -1,0 +1,44 @@
+{
+  "base": {
+    "architecture": "Conv2D [16,32,64,128] latent=32",
+    "latent_dim": 32,
+    "grid": "32x128",
+    "parameters": 328900,
+    "model_size_kb": 1284.765625,
+    "latent_size_kb": 37.5,
+    "compressed_size_kb": 1322.265625,
+    "compression_ratio": 93.57872968980797,
+    "eval_psnr_mesh": 30.665119171142578,
+    "eval_ssim_mesh": 0.9573918581008911,
+    "eval_relative_error_mesh": 5.220909595489502,
+    "training_time_s": 19.866694688796997
+  },
+  "medium": {
+    "architecture": "Conv2D [32,64,128,256] latent=64",
+    "latent_dim": 64,
+    "grid": "32x128",
+    "parameters": 1307012,
+    "model_size_kb": 5105.515625,
+    "latent_size_kb": 75.0,
+    "compressed_size_kb": 5180.515625,
+    "compression_ratio": 23.88486908578719,
+    "eval_psnr_mesh": 32.751129150390625,
+    "eval_ssim_mesh": 0.97230464220047,
+    "eval_relative_error_mesh": 4.1018476486206055,
+    "training_time_s": 16.405874252319336
+  },
+  "large": {
+    "architecture": "Conv2D [32,64,128,256] latent=128",
+    "latent_dim": 128,
+    "grid": "32x128",
+    "parameters": 1831364,
+    "model_size_kb": 7153.765625,
+    "latent_size_kb": 150.0,
+    "compressed_size_kb": 7303.765625,
+    "compression_ratio": 16.941389394597394,
+    "eval_psnr_mesh": 32.752620697021484,
+    "eval_ssim_mesh": 0.9703966975212097,
+    "eval_relative_error_mesh": 4.101616859436035,
+    "training_time_s": 16.596303939819336
+  }
+}

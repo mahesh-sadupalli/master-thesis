@@ -1,0 +1,9 @@
+{
+  "model": "base",
+  "strategy": "er_scaled",
+  "parameters": 6692,
+  "psnr_db": 21.470722198486328,
+  "ssim": 0.8829522132873535,
+  "relative_error_pct": 15.070369720458984,
+  "training_time_s": 49.93814444541931
+}

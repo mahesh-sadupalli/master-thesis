@@ -1,0 +1,83 @@
+{
+  "base_naive": {
+    "model": "base",
+    "strategy": "naive",
+    "parameters": 6692,
+    "psnr_db": 14.90235424041748,
+    "ssim": 0.799552857875824,
+    "relative_error_pct": 32.07469940185547,
+    "training_time_s": 42.66861581802368
+  },
+  "medium_naive": {
+    "model": "medium",
+    "strategy": "naive",
+    "parameters": 14644,
+    "psnr_db": 13.379131317138672,
+    "ssim": 0.7822262048721313,
+    "relative_error_pct": 38.20767593383789,
+    "training_time_s": 71.58882522583008
+  },
+  "large_naive": {
+    "model": "large",
+    "strategy": "naive",
+    "parameters": 25668,
+    "psnr_db": 13.178735733032227,
+    "ssim": 0.7941093444824219,
+    "relative_error_pct": 39.07075500488281,
+    "training_time_s": 85.27279257774353
+  },
+  "base_er_scaled": {
+    "model": "base",
+    "strategy": "er_scaled",
+    "parameters": 6692,
+    "psnr_db": 21.470722198486328,
+    "ssim": 0.8829522132873535,
+    "relative_error_pct": 15.070369720458984,
+    "training_time_s": 49.93814444541931
+  },
+  "medium_er_scaled": {
+    "model": "medium",
+    "strategy": "er_scaled",
+    "parameters": 14644,
+    "psnr_db": 21.976091384887695,
+    "ssim": 0.8782127499580383,
+    "relative_error_pct": 14.222556114196777,
+    "training_time_s": 77.43809962272644
+  },
+  "large_er_scaled": {
+    "model": "large",
+    "strategy": "er_scaled",
+    "parameters": 25668,
+    "psnr_db": 22.026674270629883,
+    "ssim": 0.9034039974212646,
+    "relative_error_pct": 14.139124870300293,
+    "training_time_s": 90.71700477600098
+  },
+  "base_er_aggressive": {
+    "model": "base",
+    "strategy": "er_aggressive",
+    "parameters": 6692,
+    "psnr_db": 21.596073150634766,
+    "ssim": 0.8957814574241638,
+    "relative_error_pct": 14.855252265930176,
+    "training_time_s": 59.42711925506592
+  },
+  "medium_er_aggressive": {
+    "model": "medium",
+    "strategy": "er_aggressive",
+    "parameters": 14644,
+    "psnr_db": 23.26526641845703,
+    "ssim": 0.8961412310600281,
+    "relative_error_pct": 12.258095741271973,
+    "training_time_s": 88.15963339805603
+  },
+  "large_er_aggressive": {
+    "model": "large",
+    "strategy": "er_aggressive",
+    "parameters": 25668,
+    "psnr_db": 23.190521240234375,
+    "ssim": 0.8930550217628479,
+    "relative_error_pct": 12.36674976348877,
+    "training_time_s": 101.25785803794861
+  }
+}

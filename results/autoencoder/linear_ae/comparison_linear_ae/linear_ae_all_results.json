@@ -1,0 +1,41 @@
+{
+  "base": {
+    "architecture": "1200-256-128-16-128-256-1200",
+    "latent_dim": 16,
+    "parameters": 686016,
+    "model_size_kb": 2679.75,
+    "latent_size_kb": 1649.8125,
+    "compressed_size_kb": 4329.5625,
+    "compression_ratio": 28.579316616863714,
+    "eval_psnr": 36.232723236083984,
+    "eval_ssim": 0.9696710705757141,
+    "eval_relative_error": 2.7434592247009277,
+    "training_time_s": 57.334009647369385
+  },
+  "medium": {
+    "architecture": "1200-512-256-128-32-128-256-512-1200",
+    "latent_dim": 32,
+    "parameters": 1567696,
+    "model_size_kb": 6123.8125,
+    "latent_size_kb": 3299.625,
+    "compressed_size_kb": 9423.4375,
+    "compression_ratio": 13.130658265627591,
+    "eval_psnr": 37.89866638183594,
+    "eval_ssim": 0.9719210267066956,
+    "eval_relative_error": 2.2645585536956787,
+    "training_time_s": 61.98661255836487
+  },
+  "large": {
+    "architecture": "1200-512-256-128-64-128-256-512-1200",
+    "latent_dim": 64,
+    "parameters": 1575920,
+    "model_size_kb": 6155.9375,
+    "latent_size_kb": 6599.25,
+    "compressed_size_kb": 12755.1875,
+    "compression_ratio": 9.70083250442222,
+    "eval_psnr": 37.940948486328125,
+    "eval_ssim": 0.9749138951301575,
+    "eval_relative_error": 2.2519450187683105,
+    "training_time_s": 61.914371728897095
+  }
+}

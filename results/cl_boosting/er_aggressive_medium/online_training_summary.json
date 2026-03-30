@@ -1,0 +1,17 @@
+{
+  "model_name": "medium",
+  "strategy": {
+    "strategy": "er_aggressive",
+    "buffer_size": 100000,
+    "replay_weight": 1.0
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "final_loss": 0.0060532246716320515,
+  "final_psnr": 22.180130004882812,
+  "final_ssim": 0.8801368474960327,
+  "final_relative_error": 14.710322380065918,
+  "total_training_time": 88.15963339805603,
+  "avg_time_per_window": 4.407981669902801
+}

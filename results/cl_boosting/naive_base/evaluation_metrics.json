@@ -1,0 +1,9 @@
+{
+  "model": "base",
+  "strategy": "naive",
+  "parameters": 6692,
+  "psnr_db": 14.90235424041748,
+  "ssim": 0.799552857875824,
+  "relative_error_pct": 32.07469940185547,
+  "training_time_s": 42.66861581802368
+}

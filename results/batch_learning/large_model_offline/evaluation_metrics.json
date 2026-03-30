@@ -1,0 +1,9 @@
+{
+  "model": "large_model_minmax.pth",
+  "architecture": "4-128-128-64-4",
+  "training_mode": "offline_batch",
+  "parameters": 25668,
+  "psnr_db": 35.716033935546875,
+  "ssim": 0.9823233485221863,
+  "relative_error_pct": 2.9238600730895996
+}

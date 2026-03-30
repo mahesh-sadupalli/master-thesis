@@ -1,0 +1,9 @@
+{
+  "model": "medium_model_minmax.pth",
+  "architecture": "4-96-96-48-4",
+  "training_mode": "offline_batch",
+  "parameters": 14644,
+  "psnr_db": 34.183837890625,
+  "ssim": 0.9853297472000122,
+  "relative_error_pct": 3.4884564876556396
+}
