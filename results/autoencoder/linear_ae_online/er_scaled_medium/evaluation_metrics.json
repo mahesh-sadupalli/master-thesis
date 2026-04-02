@@ -1,0 +1,15 @@
+{
+  "model": "medium_er_scaled",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 50000,
+    "replay_weight": 0.7,
+    "replay_batch_size": 10000
+  },
+  "parameters": 34252,
+  "loss": 0.0003591675776988268,
+  "psnr_db": 34.44702911376953,
+  "ssim": 0.9788941740989685,
+  "relative_error_pct": 3.390066385269165
+}

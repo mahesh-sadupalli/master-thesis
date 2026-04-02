@@ -1,0 +1,12 @@
+{
+  "model": "medium_naive",
+  "training_mode": "online_streaming",
+  "strategy": {
+    "strategy": "naive"
+  },
+  "parameters": 34252,
+  "loss": 0.0007660090923309326,
+  "psnr_db": 31.157663345336914,
+  "ssim": 0.9769237637519836,
+  "relative_error_pct": 4.9508137702941895
+}

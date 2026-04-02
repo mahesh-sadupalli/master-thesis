@@ -8,13 +8,13 @@
 
 This thesis investigates the application of neural networks for concurrent and real-time data compression in streaming spatio-temporal datasets. As modern scientific simulations generate increasingly large data volumes due to higher resolutions and longer runtimes, traditional storage and post-processing approaches face significant I/O bottlenecks and scalability limitations. This work proposes an in-situ and in-transit compression framework that employs deep learning neural networks to learn compact representations of data during runtime.
 
-Five compression approaches were systematically evaluated on a vortex shedding CFD dataset (7.9M samples, 300 timesteps) across three model sizes:
+Four compression architectures were systematically evaluated across two training paradigms (offline batch vs online streaming) with three model sizes each, plus continual learning strategies (Naive, ER Scaled, ER Aggressive) to mitigate catastrophic forgetting in online mode. Validated on a vortex shedding CFD dataset (7.9M samples, 300 timesteps):
 
-1. **Batch Learning (Offline INR)** -- Coordinate-based MLPs trained on the full dataset, achieving up to 35.72 dB PSNR with compression ratios exceeding 7,700:1.
-2. **Continual Learning (Naive Online INR)** -- Streaming training with temporal windows, revealing catastrophic forgetting as the central challenge (full-dataset PSNR drops to 14-17 dB).
-3. **Continual Learning with Experience Replay** -- ER-Scaled and ER-Aggressive strategies that mitigate forgetting, improving online PSNR by +6.7-10.1 dB with minimal overhead.
-4. **Linear Autoencoder** -- Temporal-point encoding that compresses per-point time series, achieving the best reconstruction quality (37.94 dB PSNR) with 28.6:1 compression.
-5. **Convolutional Autoencoder** -- Grid-based Conv2D compression achieving the best compression-to-size ratio (93.6:1) with 30.67 dB PSNR.
+1. **Implicit Neural Representations (INR)** -- Coordinate-based MLPs encoding the entire dataset into model weights: up to 35.72 dB PSNR with 27,395:1 compression (offline); catastrophic forgetting in online mode mitigated by Experience Replay (+8.6 dB).
+2. **Linear Autoencoder** -- Temporal-point encoding compressing per-point time series: best reconstruction quality at 37.94 dB PSNR (offline); online + ER Aggressive achieves 34.80 dB (gap of only -3.14 dB to offline).
+3. **Convolutional Autoencoder** -- Grid-based Conv2D compression: best compression efficiency at 93.6:1 (offline); online + ER Aggressive achieves 31.05 dB (gap of only -1.70 dB to offline).
+
+Autoencoders proved significantly more streaming-friendly than INRs, with Conv2D AE showing the smallest offline-to-online gap (-1.70 dB) compared to INR (-12.5 dB).
 
 ## Approach
 
@@ -36,13 +36,13 @@ Coordinate-based MLPs used for batch learning, continual learning, and experienc
 
 ### Linear Autoencoder
 
-Fully connected autoencoders compressing per-point temporal sequences (1200-dim → latent):
+Fully connected autoencoders compressing per-point temporal windows (60-dim → latent). Input: 15 timesteps × 4 variables = 60 per spatial point:
 
-| Model | Encoder | Latent Dim | Parameters | Total Size |
-|-------|---------|-----------|------------|------------|
-| Base | 1200 → 256 → 128 → 16 | 16 | 686,016 | 4,329.6 KB |
-| Medium | 1200 → 512 → 256 → 128 → 32 | 32 | 1,567,696 | 9,423.4 KB |
-| Large | 1200 → 512 → 256 → 128 → 64 | 64 | 1,575,920 | 12,755.2 KB |
+| Model | Architecture | Latent Dim | Parameters | Compression |
+|-------|-------------|-----------|------------|-------------|
+| Base | 60 → 64 → 32 → 8 → 32 → 64 → 60 | 8 | 12,548 | 28.6:1 |
+| Medium | 60 → 128 → 64 → 16 → 64 → 128 → 60 | 16 | 34,252 | 13.1:1 |
+| Large | 60 → 256 → 128 → 32 → 128 → 256 → 60 | 32 | 117,724 | 9.7:1 |
 
 ### Convolutional Autoencoder
 
@@ -75,9 +75,27 @@ Conv2D autoencoders operating on 32×128 interpolated field grids:
 | **Linear AE** | Base | 36.23 | 0.9697 | 2.74 | 28.6:1 | 57.3s |
 | | Medium | 37.90 | 0.9719 | 2.26 | 13.1:1 | 62.0s |
 | | Large | 37.94 | 0.9749 | 2.25 | 9.7:1 | 61.9s |
+| **Linear AE Naive** | Base | 28.51 | 0.9751 | 6.71 | 28.6:1 | — |
+| | Medium | 31.16 | 0.9769 | 4.95 | 13.1:1 | — |
+| | Large | 30.79 | 0.9805 | 5.17 | 9.7:1 | — |
+| **Linear AE ER Scaled** | Base | 31.38 | 0.9769 | 4.82 | 28.6:1 | — |
+| | Medium | 34.45 | 0.9789 | 3.39 | 13.1:1 | — |
+| | Large | 34.11 | 0.8850 | 3.52 | 9.7:1 | — |
+| **Linear AE ER Aggressive** | Base | 31.18 | 0.9750 | 4.94 | 28.6:1 | — |
+| | Medium | 34.46 | 0.9865 | 3.38 | 13.1:1 | — |
+| | Large | 34.80 | 0.9859 | 3.26 | 9.7:1 | — |
 | **Conv AE** | Base | 30.67 | 0.9574 | 5.22 | 93.6:1 | 19.9s |
 | | Medium | 32.75 | 0.9723 | 4.10 | 23.9:1 | 16.4s |
 | | Large | 32.75 | 0.9704 | 4.10 | 16.9:1 | 16.6s |
+| **Conv AE Naive** | Base | 18.53 | 0.8859 | 21.10 | 93.6:1 | 11.1s |
+| | Medium | 18.35 | 0.8821 | 21.56 | 23.9:1 | 9.2s |
+| | Large | 18.61 | 0.8901 | 20.92 | 16.9:1 | 8.7s |
+| **Conv AE ER Scaled** | Base | 29.18 | 0.9538 | 6.20 | 93.6:1 | 19.0s |
+| | Medium | 30.48 | 0.9609 | 5.33 | 23.9:1 | 19.0s |
+| | Large | 30.69 | 0.9603 | 5.21 | 16.9:1 | 18.6s |
+| **Conv AE ER Aggressive** | Base | 29.32 | 0.9520 | 6.10 | 93.6:1 | 21.6s |
+| | Medium | 30.94 | 0.9588 | 5.06 | 23.9:1 | 24.7s |
+| | Large | 31.05 | 0.9647 | 5.00 | 16.9:1 | 25.1s |
 
 ### Comparison Across All Methods
 
@@ -113,27 +131,52 @@ Full-dataset evaluation reveals severe quality degradation due to catastrophic f
 |:---:|:---:|
 | ![](results/cl_boosting/comparison_cl/cl_psnr_per_window.png) | ![](results/cl_boosting/comparison_cl/cl_gap_to_offline.png) |
 
-### Flow Field Reconstructions -- Linear Autoencoder
+### Flow Field Reconstructions -- Linear Autoencoder (Offline)
 
 | Base (36.23 dB) | Medium (37.90 dB) | Large (37.94 dB) |
 |:---:|:---:|:---:|
 | ![](results/autoencoder/linear_ae/base_autoencoder/base_ae_flow_visualization.png) | ![](results/autoencoder/linear_ae/medium_autoencoder/medium_ae_flow_visualization.png) | ![](results/autoencoder/linear_ae/large_autoencoder/large_ae_flow_visualization.png) |
 
-### Flow Field Reconstructions -- Convolutional Autoencoder
+### Flow Field Reconstructions -- Linear Autoencoder (Online + CL)
+
+Best online: Large ER Aggressive at 34.80 dB (gap of only -3.14 dB to offline).
+
+| Naive | ER Scaled | ER Aggressive |
+|:---:|:---:|:---:|
+| ![](results/autoencoder/linear_ae_online/ae_online_results/ae_naive_flow_field.png) | ![](results/autoencoder/linear_ae_online/ae_online_results/ae_er_scaled_flow_field.png) | ![](results/autoencoder/linear_ae_online/ae_online_results/ae_er_aggressive_flow_field.png) |
+
+| PSNR per Window | Gap to Offline |
+|:---:|:---:|
+| ![](results/autoencoder/linear_ae_online/ae_online_results/comparison_ae_online/ae_online_psnr_per_window.png) | ![](results/autoencoder/linear_ae_online/ae_online_results/comparison_ae_online/ae_online_gap_to_offline.png) |
+
+### Flow Field Reconstructions -- Convolutional Autoencoder (Offline)
 
 | Base (30.67 dB) | Medium (32.75 dB) | Large (32.75 dB) |
 |:---:|:---:|:---:|
 | ![](results/autoencoder/conv2d/base/base_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/medium/medium_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/large/large_conv_ae_flow_visualization.png) |
 
+### Flow Field Reconstructions -- Conv2D Autoencoder (Online + CL)
+
+Best online: Large ER Aggressive at 31.05 dB (gap of only -1.70 dB to offline).
+
+| Naive | ER Scaled | ER Aggressive |
+|:---:|:---:|:---:|
+| ![](results/autoencoder/conv2d_online/conv_naive_flow_field.png) | ![](results/autoencoder/conv2d_online/conv_er_scaled_flow_field.png) | ![](results/autoencoder/conv2d_online/conv_er_aggressive_flow_field.png) |
+
+| PSNR per Window | Gap to Offline |
+|:---:|:---:|
+| ![](results/autoencoder/conv2d_online/comparison_conv_online/conv_online_psnr_per_window.png) | ![](results/autoencoder/conv2d_online/comparison_conv_online/conv_online_gap_to_offline.png) |
+
 ## Key Findings
 
-1. **Linear Autoencoder achieves the best reconstruction quality** -- 37.94 dB PSNR (Base model alone surpasses offline INR Large at 35.72 dB), training in under 60 seconds vs. hours for INR
-2. **Convolutional Autoencoder offers the best compression efficiency** -- 93.6:1 compression ratio with 30.67 dB PSNR and only 20 seconds of training
-3. **Batch learning INR provides extreme compression** -- up to 27,395:1 ratio with good quality (35.72 dB), but requires hours of training on the full dataset
-4. **Catastrophic forgetting is severe in naive online training** -- larger models forget more (counter-intuitive), with full-dataset PSNR dropping to 14-17 dB
-5. **Experience Replay effectively mitigates forgetting** -- ER-Aggressive improves online PSNR by +6.7-10.1 dB with only 14-40% computational overhead
-6. **Regularization methods (EWC, LwF) fail for INR compression** -- shared parameter spaces make task-specific protection impossible; LwF is actively harmful for large models
-7. **Each approach occupies a distinct point in the accuracy-compression-speed trade-off space** -- no single method dominates across all criteria
+1. **Linear Autoencoder achieves the best reconstruction quality** -- 37.94 dB PSNR offline; online + ER Aggressive reaches 34.80 dB (gap of only -3.14 dB)
+2. **Convolutional Autoencoder offers the best compression efficiency** -- 93.6:1 compression at 30.67 dB offline; online + ER Aggressive reaches 31.05 dB (gap of only -1.70 dB)
+3. **Autoencoders are far more streaming-friendly than INRs** -- Conv2D gap to offline is -1.70 dB vs -12.5 dB for INR, making AE architectures practical for real-time compression
+4. **Batch learning INR provides extreme compression** -- up to 27,395:1 ratio with 35.72 dB, but requires hours of training on the full dataset
+5. **Catastrophic forgetting is severe in naive online training** -- larger models forget more (counter-intuitive), with INR PSNR dropping to 13-17 dB
+6. **Experience Replay is the most effective CL strategy** -- consistently improves all architectures; ER-Aggressive best for quality, ER-Scaled best for efficiency
+7. **Regularization methods (EWC, LwF) fail for INR compression** -- shared parameter spaces make task-specific protection impossible; LwF is actively harmful for large models
+8. **Each approach occupies a distinct point in the accuracy-compression-speed trade-off space** -- no single method dominates across all criteria
 
 ## Evaluation Metrics
 

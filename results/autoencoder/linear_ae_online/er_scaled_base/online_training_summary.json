@@ -1,0 +1,21 @@
+{
+  "model_name": "base_er_scaled",
+  "strategy": {
+    "strategy": "experience_replay",
+    "buffer_size": 50000,
+    "replay_weight": 0.7,
+    "replay_batch_size": 10000
+  },
+  "total_windows": 20,
+  "epochs_per_window": 100,
+  "total_epochs": 2000,
+  "input_dim": 60,
+  "latent_dim": 8,
+  "parameters": 12548,
+  "final_loss": 0.001172645715996623,
+  "final_psnr": 29.308330535888672,
+  "final_ssim": 0.9675832986831665,
+  "final_relative_error": 6.474587917327881,
+  "total_training_time": 38.1309711933136,
+  "avg_time_per_window": 1.90654855966568
+}

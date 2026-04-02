@@ -1,0 +1,56 @@
+{
+  "base_naive": {
+    "psnr_db": 28.20505142211914,
+    "ssim": 0.9664690494537354,
+    "relative_error_pct": 6.955159664154053,
+    "training_time_s": 8.796857833862305
+  },
+  "medium_naive": {
+    "psnr_db": 30.46293067932129,
+    "ssim": 0.9812197089195251,
+    "relative_error_pct": 5.363066673278809,
+    "training_time_s": 8.96919298171997
+  },
+  "large_naive": {
+    "psnr_db": 30.551870346069336,
+    "ssim": 0.9788851737976074,
+    "relative_error_pct": 5.308431625366211,
+    "training_time_s": 20.439809560775757
+  },
+  "base_er_scaled": {
+    "psnr_db": 31.46143341064453,
+    "ssim": 0.9779819250106812,
+    "relative_error_pct": 4.780661106109619,
+    "training_time_s": 46.78802800178528
+  },
+  "medium_er_scaled": {
+    "psnr_db": 33.814605712890625,
+    "ssim": 0.9855226874351501,
+    "relative_error_pct": 3.646106004714966,
+    "training_time_s": 42.693870544433594
+  },
+  "large_er_scaled": {
+    "psnr_db": 33.34889221191406,
+    "ssim": 0.9842648506164551,
+    "relative_error_pct": 3.846935987472534,
+    "training_time_s": 62.88124942779541
+  },
+  "base_er_aggressive": {
+    "psnr_db": 30.815776824951172,
+    "ssim": 0.9725419282913208,
+    "relative_error_pct": 5.1495680809021,
+    "training_time_s": 208.73115873336792
+  },
+  "medium_er_aggressive": {
+    "psnr_db": 34.590850830078125,
+    "ssim": 0.9869518876075745,
+    "relative_error_pct": 3.3343963623046875,
+    "training_time_s": 222.1210126876831
+  },
+  "large_er_aggressive": {
+    "psnr_db": 34.663543701171875,
+    "ssim": 0.9858821034431458,
+    "relative_error_pct": 3.3066062927246094,
+    "training_time_s": 239.9109754562378
+  }
+}
