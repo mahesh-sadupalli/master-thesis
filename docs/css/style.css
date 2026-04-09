@@ -125,12 +125,90 @@ body::before {
 #description.collapsed { max-height: 0; }
 
 .abstract-inner p {
-  padding-bottom: 24px;
+  padding-bottom: 16px;
   text-align: justify;
   font-size: 0.88rem;
   color: var(--text-dim);
   line-height: 1.85;
+}
+
+.abstract-inner p:last-child {
   border-bottom: 1px solid var(--border);
+  padding-bottom: 20px;
+}
+
+.formula-note {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.formula-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--text);
+  flex-wrap: wrap;
+}
+
+.formula-label {
+  min-width: 140px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.formula-eq {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.formula-frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  position: relative;
+  padding: 0 6px;
+}
+
+.frac-num {
+  padding-bottom: 3px;
+  border-bottom: 1.5px solid var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.frac-den {
+  padding-top: 3px;
+  font-size: 0.8rem;
+}
+
+.formula-highlight {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.formula-dim {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-style: italic;
+}
+
+.formula-example {
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.formula-example strong {
+  color: var(--accent);
 }
 
 /* ── Sticky Control Bar ───────────────────────────────────────────── */

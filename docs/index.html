@@ -8,7 +8,7 @@
   <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
   <meta property="og:description" content="Interactive fluid dynamics compression visualization — PSNR up to 36 dB with 27,395:1 compression ratio.">
   <meta property="og:type" content="website">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 
@@ -31,8 +31,36 @@
   <section id="description" class="collapsed">
     <div class="abstract-inner">
       <p>
-        This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing gigabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR of 32&ndash;36&nbsp;dB with compression ratios up to 27,395:1, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including experience replay and elastic weight consolidation are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps (30 representative timesteps visualized here).
+        This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing megabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR up to 35.72&nbsp;dB, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including Experience Replay are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps (30 representative timesteps visualized here).
       </p>
+      <div class="formula-note">
+        <div class="formula-line">
+          <span class="formula-label">Compression Ratio</span>
+          <span class="formula-eq">=</span>
+          <span class="formula-frac">
+            <span class="frac-num">Original Data Size</span>
+            <span class="frac-den">Compressed Data Size</span>
+          </span>
+        </div>
+        <div class="formula-line">
+          <span class="formula-label">Original</span>
+          <span class="formula-eq">=</span>
+          <span>7,919,100 &times; 4 &times; 4 bytes</span>
+          <span class="formula-eq">=</span>
+          <span class="formula-highlight">120.8 MB</span>
+        </div>
+        <div class="formula-line">
+          <span class="formula-label">Compressed</span>
+          <span class="formula-eq">=</span>
+          <span>&theta; &times; 4 bytes</span>
+          <span class="formula-dim">(model parameters in float32)</span>
+        </div>
+        <div class="formula-line formula-example">
+          <span class="formula-label">Example</span>
+          <span class="formula-eq">:</span>
+          <span>Base model &theta; = 6,692 &rarr; 26.1 KB &rarr; CR = <strong>4,733 : 1</strong></span>
+        </div>
+      </div>
     </div>
   </section>
 
