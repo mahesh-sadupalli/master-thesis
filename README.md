@@ -12,9 +12,9 @@ Four compression architectures were systematically evaluated across two training
 
 1. **Implicit Neural Representations (INR)** -- Coordinate-based MLPs encoding the entire dataset into model weights: up to 35.72 dB PSNR with 27,395:1 compression (offline); catastrophic forgetting in online mode mitigated by Experience Replay (+8.6 dB).
 2. **Linear Autoencoder** -- Temporal-point encoding compressing per-point time series: best reconstruction quality at 37.94 dB PSNR (offline); online + ER Aggressive achieves 34.80 dB (gap of only -3.14 dB to offline).
-3. **Convolutional Autoencoder** -- Grid-based Conv2D compression: best compression efficiency at 93.6:1 (offline); online + ER Aggressive achieves 31.05 dB (gap of only -1.70 dB to offline).
+3. **Convolutional Autoencoder** -- Grid-based Conv2D compression: best compression efficiency at 93.6:1 with 30.67 dB PSNR (offline).
 
-Autoencoders proved significantly more streaming-friendly than INRs, with Conv2D AE showing the smallest offline-to-online gap (-1.70 dB) compared to INR (-12.5 dB).
+Autoencoders proved significantly more streaming-friendly than INRs, with Linear AE showing -3.14 dB offline-to-online gap compared to INR (-12.5 dB).
 
 ## Approach
 
@@ -87,15 +87,6 @@ Conv2D autoencoders operating on 32×128 interpolated field grids:
 | **Conv AE** | Base | 30.67 | 0.9574 | 5.22 | 93.6:1 | 19.9s |
 | | Medium | 32.75 | 0.9723 | 4.10 | 23.9:1 | 16.4s |
 | | Large | 32.75 | 0.9704 | 4.10 | 16.9:1 | 16.6s |
-| **Conv AE Naive** | Base | 18.53 | 0.8859 | 21.10 | 93.6:1 | 11.1s |
-| | Medium | 18.35 | 0.8821 | 21.56 | 23.9:1 | 9.2s |
-| | Large | 18.61 | 0.8901 | 20.92 | 16.9:1 | 8.7s |
-| **Conv AE ER Scaled** | Base | 29.18 | 0.9538 | 6.20 | 93.6:1 | 19.0s |
-| | Medium | 30.48 | 0.9609 | 5.33 | 23.9:1 | 19.0s |
-| | Large | 30.69 | 0.9603 | 5.21 | 16.9:1 | 18.6s |
-| **Conv AE ER Aggressive** | Base | 29.32 | 0.9520 | 6.10 | 93.6:1 | 21.6s |
-| | Medium | 30.94 | 0.9588 | 5.06 | 23.9:1 | 24.7s |
-| | Large | 31.05 | 0.9647 | 5.00 | 16.9:1 | 25.1s |
 
 ### Comparison Across All Methods
 
@@ -155,23 +146,12 @@ Best online: Large ER Aggressive at 34.80 dB (gap of only -3.14 dB to offline).
 |:---:|:---:|:---:|
 | ![](results/autoencoder/conv2d/base/base_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/medium/medium_conv_ae_flow_visualization.png) | ![](results/autoencoder/conv2d/large/large_conv_ae_flow_visualization.png) |
 
-### Flow Field Reconstructions -- Conv2D Autoencoder (Online + CL)
-
-Best online: Large ER Aggressive at 31.05 dB (gap of only -1.70 dB to offline).
-
-| Naive | ER Scaled | ER Aggressive |
-|:---:|:---:|:---:|
-| ![](results/autoencoder/conv2d_online/conv_naive_flow_field.png) | ![](results/autoencoder/conv2d_online/conv_er_scaled_flow_field.png) | ![](results/autoencoder/conv2d_online/conv_er_aggressive_flow_field.png) |
-
-| PSNR per Window | Gap to Offline |
-|:---:|:---:|
-| ![](results/autoencoder/conv2d_online/comparison_conv_online/conv_online_psnr_per_window.png) | ![](results/autoencoder/conv2d_online/comparison_conv_online/conv_online_gap_to_offline.png) |
 
 ## Key Findings
 
 1. **Linear Autoencoder achieves the best reconstruction quality** -- 37.94 dB PSNR offline; online + ER Aggressive reaches 34.80 dB (gap of only -3.14 dB)
-2. **Convolutional Autoencoder offers the best compression efficiency** -- 93.6:1 compression at 30.67 dB offline; online + ER Aggressive reaches 31.05 dB (gap of only -1.70 dB)
-3. **Autoencoders are far more streaming-friendly than INRs** -- Conv2D gap to offline is -1.70 dB vs -12.5 dB for INR, making AE architectures practical for real-time compression
+2. **Convolutional Autoencoder offers the best compression efficiency** -- 93.6:1 compression ratio with 30.67 dB PSNR and only 20 seconds of training
+3. **Autoencoders are far more streaming-friendly than INRs** -- Linear AE gap to offline is -3.14 dB vs -12.5 dB for INR, making AE architectures practical for real-time compression
 4. **Batch learning INR provides extreme compression** -- up to 27,395:1 ratio with 35.72 dB, but requires hours of training on the full dataset
 5. **Catastrophic forgetting is severe in naive online training** -- larger models forget more (counter-intuitive), with INR PSNR dropping to 13-17 dB
 6. **Experience Replay is the most effective CL strategy** -- consistently improves all architectures; ER-Aggressive best for quality, ER-Scaled best for efficiency
