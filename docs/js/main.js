@@ -13,7 +13,6 @@ APP.Main = (function () {
     timestep: 0,
     playing: false,
     speed: 1,
-    view: '2d',
   };
 
   var manifest;
@@ -26,14 +25,11 @@ APP.Main = (function () {
   var currentOrigData = null;
   var currentPredData = null;
   var playIntervalId = null;
-  var threeInitialized = false;
-  var threeVisible = false;
   var lastHoverIx = -1;
   var lastHoverIy = -1;
   var pinnedIx = -1;
   var pinnedIy = -1;
 
-  // ── Init ────────────────────────────────────────────────────────────────
   async function init() {
     try {
       manifest = await APP.DataLoader.loadManifest();
@@ -45,13 +41,8 @@ APP.Main = (function () {
       gridY = gridData.gridY;
       cylinderMask = await APP.DataLoader.loadCylinderMask();
 
-      // 2D renderer
       APP.CanvasRenderer.init(nx, ny, cylinderMask);
-
-      // Coordinate system scatter plot
       APP.CoordSystem.init(nx, ny, gridX, gridY, cylinderMask, manifest);
-
-      // Bit viz
       APP.BitViz.initHowItWorks();
 
       document.getElementById('timeline-slider').max = manifest.timesteps.count - 1;
@@ -59,7 +50,6 @@ APP.Main = (function () {
       setupControls();
       setupCanvasHover();
       setupAbstractToggle();
-      setupViewToggle();
 
       await loadAndDisplay();
 
@@ -76,7 +66,6 @@ APP.Main = (function () {
     }
   }
 
-  // ── Data ────────────────────────────────────────────────────────────────
   function getSourceKey() {
     return state.mode + '_' + state.model;
   }
@@ -95,38 +84,42 @@ APP.Main = (function () {
     currentOrigField = APP.DataLoader.extractField(currentOrigData, state.fieldIdx, nx, ny);
     currentPredField = APP.DataLoader.extractField(currentPredData, state.fieldIdx, nx, ny);
 
-    // 2D canvases (compute error before 3D so we have maxErr)
     var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
     currentErrorField = errResult.errorField;
     lastMaxErr = errResult.maxErr;
 
-    // 3D surfaces (only if initialized and visible)
-    if (threeInitialized && threeVisible) {
-      APP.ThreeScene.updateSurfaces(currentOrigField, currentPredField, currentErrorField, lastMaxErr);
-    }
-
-    // Coordinate system coloring
     APP.CoordSystem.setFieldData(currentOrigField, state.timestep);
-
     updateMetrics();
 
-    // If a point is pinned, draw marker and update bits live
     if (pinnedIx >= 0) {
       APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
       updateBitsAtPoint(pinnedIx, pinnedIy);
     }
   }
 
-  // ── Controls ────────────────────────────────────────────────────────────
   function setupControls() {
-    setupToggle('mode-toggle', function (val) {
-      state.mode = val;
-      loadAndDisplay();
+    // Approach dropdown
+    var modeSelect = document.getElementById('mode-select');
+    modeSelect.addEventListener('change', function (e) {
+      var val = e.target.value;
+      var comingSoon = ['lae_offline', 'lae_online', 'conv_offline', 'conv_online'];
+      var csOverlay = document.getElementById('coming-soon-overlay');
+      if (comingSoon.indexOf(val) !== -1) {
+        csOverlay.style.display = 'flex';
+        clearMetrics();
+      } else {
+        csOverlay.style.display = 'none';
+        state.mode = val;
+        loadAndDisplay();
+      }
     });
 
     setupToggle('model-toggle', function (val) {
       state.model = val;
-      loadAndDisplay();
+      var csOverlay = document.getElementById('coming-soon-overlay');
+      if (csOverlay.style.display !== 'flex') {
+        loadAndDisplay();
+      }
     });
 
     document.getElementById('field-select').addEventListener('change', function (e) {
@@ -173,7 +166,7 @@ APP.Main = (function () {
 
   function updateMetrics() {
     var m = manifest.metrics[getSourceKey()];
-    if (!m) return;
+    if (!m) { clearMetrics(); return; }
     document.getElementById('metric-psnr').textContent = m.psnr.toFixed(2);
     document.getElementById('metric-ssim').textContent = m.ssim.toFixed(4);
     document.getElementById('metric-error').textContent = m.rel_error.toFixed(2);
@@ -182,7 +175,14 @@ APP.Main = (function () {
     document.getElementById('metric-cr').textContent = m.cr.toLocaleString();
   }
 
-  // ── Abstract Toggle ────────────────────────────────────────────────────
+  function clearMetrics() {
+    ['metric-psnr', 'metric-ssim', 'metric-error', 'metric-params', 'metric-size', 'metric-cr']
+      .forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '--';
+      });
+  }
+
   function setupAbstractToggle() {
     var btn = document.getElementById('abstract-toggle');
     if (!btn) return;
@@ -195,60 +195,6 @@ APP.Main = (function () {
     });
   }
 
-  // ── View Toggle (2D / 3D) ─────────────────────────────────────────────
-  function setupViewToggle() {
-    setupToggle('view-toggle', function (val) {
-      state.view = val;
-      applyViewMode();
-    });
-  }
-
-  function applyViewMode() {
-    var twoDView = document.getElementById('two-d-view');
-    var threeView = document.getElementById('three-view');
-
-    if (state.view === '3d') {
-      twoDView.classList.add('view-hidden');
-      threeView.classList.remove('view-hidden');
-      threeVisible = true;
-
-      if (!threeInitialized) {
-        APP.ThreeScene.init(nx, ny, gridX, gridY, cylinderMask);
-        threeInitialized = true;
-      }
-      APP.ThreeScene.show();
-      if (currentOrigField && currentPredField && currentErrorField) {
-        APP.ThreeScene.updateSurfaces(currentOrigField, currentPredField, currentErrorField, lastMaxErr);
-      }
-
-      // Unpin tracking point in 3D mode
-      if (pinnedIx >= 0) {
-        pinnedIx = -1;
-        pinnedIy = -1;
-        updatePinIndicator(false);
-      }
-    } else {
-      threeView.classList.add('view-hidden');
-      twoDView.classList.remove('view-hidden');
-      threeVisible = false;
-
-      if (threeInitialized) {
-        APP.ThreeScene.hide();
-      }
-
-      // Re-render 2D canvases
-      if (currentOrigField && currentPredField) {
-        var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
-        currentErrorField = errResult.errorField;
-        if (pinnedIx >= 0) {
-          APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
-          updateBitsAtPoint(pinnedIx, pinnedIy);
-        }
-      }
-    }
-  }
-
-  // ── Playback ────────────────────────────────────────────────────────────
   function startPlayback() {
     stopPlayback();
     playIntervalId = setInterval(function () {
@@ -263,7 +209,6 @@ APP.Main = (function () {
     if (playIntervalId) { clearInterval(playIntervalId); playIntervalId = null; }
   }
 
-  // ── Canvas hover + click → bits ────────────────────────────────────────
   function setupCanvasHover() {
     ['canvas-original', 'canvas-predicted', 'canvas-error'].forEach(function (id) {
       var c = document.getElementById(id);
@@ -283,11 +228,9 @@ APP.Main = (function () {
     lastHoverIx = grid.ix;
     lastHoverIy = grid.iy;
 
-    // Hide placeholder on first hover
     var ph = document.getElementById('bit-placeholder');
     if (ph) ph.style.display = 'none';
 
-    // If no pin, show bits at hover point; also draw temporary marker
     if (pinnedIx < 0) {
       updateBitsAtPoint(lastHoverIx, lastHoverIy);
     }
@@ -299,26 +242,20 @@ APP.Main = (function () {
     if (!grid) return;
     if (cylinderMask[grid.ix * ny + grid.iy]) return;
 
-    // Toggle pin: click same spot to unpin, new spot to re-pin
     if (pinnedIx === grid.ix && pinnedIy === grid.iy) {
-      // Unpin
       pinnedIx = -1;
       pinnedIy = -1;
       updatePinIndicator(false);
-      // Re-render to remove marker
       var errResult = APP.CanvasRenderer.update(currentOrigField, currentPredField);
       currentErrorField = errResult.errorField;
     } else {
-      // Pin new point
       pinnedIx = grid.ix;
       pinnedIy = grid.iy;
       updatePinIndicator(true);
 
-      // Hide placeholder
       var ph = document.getElementById('bit-placeholder');
       if (ph) ph.style.display = 'none';
 
-      // Draw marker and update bits
       APP.CanvasRenderer.drawMarker(pinnedIx, pinnedIy);
       updateBitsAtPoint(pinnedIx, pinnedIy);
     }
@@ -349,27 +286,21 @@ APP.Main = (function () {
     }
   }
 
-  /**
-   * Update all bit displays (Inspector + Input Coords + Field Vars) for a grid point.
-   */
   function updateBitsAtPoint(ix, iy) {
     if (!currentOrigField || !currentPredField || !currentOrigData) return;
     var idx = ix * ny + iy;
 
-    // Bit Inspector — current field
     var origVal = currentOrigField[idx];
     var predVal = currentPredField[idx];
     var errVal = Math.abs(origVal - predVal);
     APP.BitViz.updateVizBits(state.fieldIdx, origVal, predVal, errVal);
 
-    // Input Coordinates (x, y, z, t)
     var x = gridX[ix];
     var y = gridY[iy];
     var z = 0.0;
     var t = manifest.timesteps.values[state.timestep];
     APP.BitViz.updateRowBits('how-inputs', ['x', 'y', 'z', 't'], [x, y, z, t]);
 
-    // Field Variables — all 4 outputs
     var vx  = currentOrigData[idx * 4 + 0] / 255.0;
     var vy  = currentOrigData[idx * 4 + 1] / 255.0;
     var p   = currentOrigData[idx * 4 + 2] / 255.0;
@@ -377,7 +308,6 @@ APP.Main = (function () {
     APP.BitViz.updateRowBits('how-outputs', ['Vx', 'Vy', 'P', 'TKE'], [vx, vy, p, tke]);
   }
 
-  // ── Boot ────────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', init);
   return { state: state };
 })();

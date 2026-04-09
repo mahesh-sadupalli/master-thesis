@@ -8,7 +8,7 @@
   <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
   <meta property="og:description" content="Interactive fluid dynamics compression visualization — PSNR up to 36 dB with 27,395:1 compression ratio.">
   <meta property="og:type" content="website">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=11">
 </head>
 <body>
 
@@ -40,11 +40,22 @@
   <nav id="navbar" class="navbar">
     <div class="controls-row">
       <div class="control-group">
-        <span class="control-label">Mode</span>
-        <div class="toggle-group" id="mode-toggle">
-          <button class="toggle-btn active" data-value="offline">Batch</button>
-          <button class="toggle-btn" data-value="online">Continual</button>
-        </div>
+        <span class="control-label">Approach</span>
+        <select id="mode-select" class="mode-select">
+          <optgroup label="Implicit Neural Representations">
+            <option value="offline">Batch Training (Offline)</option>
+            <option value="online">Continual Learning (Online)</option>
+            <option value="boosted">CL Boosted — ER Aggressive (Online)</option>
+          </optgroup>
+          <optgroup label="Linear Autoencoder">
+            <option value="lae_offline" disabled>Linear AE (Offline) — Coming Soon</option>
+            <option value="lae_online" disabled>Linear AE + CL (Online) — Coming Soon</option>
+          </optgroup>
+          <optgroup label="Convolutional Autoencoder">
+            <option value="conv_offline" disabled>Conv2D AE (Offline) — Coming Soon</option>
+            <option value="conv_online" disabled>Conv2D AE + CL (Online) — Coming Soon</option>
+          </optgroup>
+        </select>
       </div>
       <div class="control-group">
         <span class="control-label">Model</span>
@@ -63,14 +74,6 @@
           <option value="3">TKE</option>
         </select>
       </div>
-      <div class="control-group">
-        <span class="control-label">View</span>
-        <div class="toggle-group" id="view-toggle">
-          <button class="toggle-btn active" data-value="2d">2D</button>
-          <button class="toggle-btn" data-value="3d">3D</button>
-        </div>
-      </div>
-      <div class="control-spacer"></div>
       <div class="control-group playback-group">
         <button id="play-btn" class="play-btn" title="Play / Pause">&#9654; Play</button>
         <input type="range" id="timeline-slider" min="0" max="29" value="0" step="1" class="timeline-range">
@@ -115,7 +118,14 @@
 
       <!-- ── Left Column: Stacked Animations ──────────────────────────── -->
       <div class="anim-column">
-        <div id="two-d-view">
+        <div id="coming-soon-overlay" class="coming-soon-overlay" style="display:none;">
+          <div class="coming-soon-inner">
+            <span class="coming-soon-icon">&#x1F6A7;</span>
+            <p>Coming Soon</p>
+            <span class="coming-soon-sub">This approach is not yet available in the interactive demo.</span>
+          </div>
+        </div>
+        <div>
           <div id="pin-status" class="pin-status">Click on the flow field to pin a tracking point</div>
           <!-- Original -->
           <div class="viz-panel">
@@ -169,41 +179,6 @@
           </div>
         </div>
 
-        <div id="three-view" class="view-hidden">
-          <!-- Original -->
-          <div class="viz-panel">
-            <div class="viz-panel-header">
-              <span class="viz-panel-title">Original</span>
-            </div>
-            <div class="viz-panel-body">
-              <div class="three-canvas-wrap">
-                <canvas id="three-canvas-original"></canvas>
-              </div>
-            </div>
-          </div>
-          <!-- Predicted -->
-          <div class="viz-panel">
-            <div class="viz-panel-header">
-              <span class="viz-panel-title">Predicted</span>
-            </div>
-            <div class="viz-panel-body">
-              <div class="three-canvas-wrap">
-                <canvas id="three-canvas-predicted"></canvas>
-              </div>
-            </div>
-          </div>
-          <!-- Absolute Error -->
-          <div class="viz-panel">
-            <div class="viz-panel-header">
-              <span class="viz-panel-title">Absolute Error</span>
-            </div>
-            <div class="viz-panel-body">
-              <div class="three-canvas-wrap">
-                <canvas id="three-canvas-error"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ── Right Column: Bits + Coordinates (sticky) ────────────────── -->
@@ -273,13 +248,10 @@
     <p>Master Thesis &mdash; BTU Cottbus-Senftenberg &bull; M.Sc. Artificial Intelligence</p>
   </footer>
 
-  <script src="lib/three.min.js?v=8"></script>
-  <script src="lib/OrbitControls.js?v=8"></script>
-  <script src="js/data-loader.js?v=8"></script>
-  <script src="js/bit-visualization.js?v=8"></script>
-  <script src="js/canvas-renderer.js?v=9"></script>
-  <script src="js/coord-system.js?v=8"></script>
-  <script src="js/three-scene.js?v=10"></script>
-  <script src="js/main.js?v=14"></script>
+  <script src="js/data-loader.js?v=11"></script>
+  <script src="js/bit-visualization.js?v=11"></script>
+  <script src="js/canvas-renderer.js?v=11"></script>
+  <script src="js/coord-system.js?v=11"></script>
+  <script src="js/main.js?v=15"></script>
 </body>
 </html>

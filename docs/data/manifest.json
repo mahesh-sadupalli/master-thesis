@@ -92,58 +92,85 @@
     "online_base",
     "online_medium",
     "online_large",
-    "original"
+    "original",
+    "boosted_base",
+    "boosted_medium",
+    "boosted_large"
   ],
   "encoding": "uint8",
   "bytes_per_timestep": 80000,
   "metrics": {
     "offline_base": {
-      "psnr": 32.15,
-      "ssim": 0.955,
-      "rel_error": 4.41,
+      "psnr": 31.24,
+      "ssim": 0.9748,
+      "rel_error": 4.9,
       "params": 6692,
-      "size_kb": 26.8,
-      "cr": 27395
+      "size_kb": 26.1,
+      "cr": 4733
     },
     "offline_medium": {
-      "psnr": 33.58,
-      "ssim": 0.9583,
-      "rel_error": 3.74,
+      "psnr": 34.18,
+      "ssim": 0.9853,
+      "rel_error": 3.49,
       "params": 14644,
-      "size_kb": 58.6,
-      "cr": 13241
+      "size_kb": 57.2,
+      "cr": 2163
     },
     "offline_large": {
-      "psnr": 35.99,
-      "ssim": 0.9856,
-      "rel_error": 2.83,
+      "psnr": 35.72,
+      "ssim": 0.9823,
+      "rel_error": 2.92,
       "params": 25668,
-      "size_kb": 102.7,
-      "cr": 7713
+      "size_kb": 100.3,
+      "cr": 1234
     },
     "online_base": {
-      "psnr": 11.97,
-      "ssim": 0.7551,
-      "rel_error": 44.92,
+      "psnr": 14.9,
+      "ssim": 0.7996,
+      "rel_error": 32.07,
       "params": 6692,
-      "size_kb": 26.8,
-      "cr": 27395
+      "size_kb": 26.1,
+      "cr": 4733
     },
     "online_medium": {
-      "psnr": 12.7,
-      "ssim": 0.7599,
-      "rel_error": 41.3,
+      "psnr": 13.38,
+      "ssim": 0.7822,
+      "rel_error": 38.21,
       "params": 14644,
-      "size_kb": 58.6,
-      "cr": 13241
+      "size_kb": 57.2,
+      "cr": 2163
     },
     "online_large": {
-      "psnr": 9.67,
-      "ssim": 0.6679,
-      "rel_error": 58.57,
+      "psnr": 13.18,
+      "ssim": 0.7941,
+      "rel_error": 39.07,
       "params": 25668,
-      "size_kb": 102.7,
-      "cr": 7713
+      "size_kb": 100.3,
+      "cr": 1234
+    },
+    "boosted_base": {
+      "psnr": 21.6,
+      "ssim": 0.8958,
+      "rel_error": 14.86,
+      "params": 6692,
+      "size_kb": 26.1,
+      "cr": 4733
+    },
+    "boosted_medium": {
+      "psnr": 23.27,
+      "ssim": 0.8961,
+      "rel_error": 12.26,
+      "params": 14644,
+      "size_kb": 57.2,
+      "cr": 2163
+    },
+    "boosted_large": {
+      "psnr": 23.19,
+      "ssim": 0.8931,
+      "rel_error": 12.37,
+      "params": 25668,
+      "size_kb": 100.3,
+      "cr": 1234
     }
   }
 }
