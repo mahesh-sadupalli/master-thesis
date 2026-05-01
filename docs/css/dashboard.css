@@ -94,7 +94,7 @@ body {
   max-width: var(--max-w);
   margin: 0 auto;
   padding: 4px var(--pad) 0;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: var(--text-dim);
   line-height: 1.7;
 }
@@ -113,14 +113,14 @@ body {
 
 /* ── Section Titles ──────────────────────────────────────────────── */
 .dash-section-title {
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: var(--accent2);
   margin: 0 0 12px;
 }
 
 .dash-caption {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   color: var(--text-muted);
   margin: -8px 0 16px;
 }
@@ -141,7 +141,7 @@ body {
 }
 
 .glance-card p {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-dim);
   margin-top: 8px;
   line-height: 1.5;
@@ -149,7 +149,7 @@ body {
 
 .glance-highlight {
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
 }
 .glance-highlight.blue { color: #2874A6; }
 .glance-highlight.green { color: #27AE60; }
@@ -173,15 +173,15 @@ body {
 }
 
 .metric-value {
-  font-family: var(--font-mono);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--accent);
   display: block;
 }
 
 .metric-label {
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -290,7 +290,7 @@ body {
 .dash-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.84rem;
+  font-size: 0.95rem;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -299,8 +299,8 @@ body {
 
 .dash-table th {
   text-align: left;
-  padding: 14px 16px;
-  font-size: 0.72rem;
+  padding: 14px 18px;
+  font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-muted);
@@ -310,11 +310,11 @@ body {
 }
 
 .dash-table td {
-  padding: 13px 16px;
+  padding: 14px 18px;
   color: var(--text);
   border-bottom: 1px solid var(--border-light);
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
 }
 
 .dash-table tr:last-child td { border-bottom: none; }

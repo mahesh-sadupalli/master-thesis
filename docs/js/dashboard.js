@@ -25,7 +25,7 @@
   };
 
   var PLOTLY_LAYOUT = {
-    font: { family: "'Source Sans 3', 'Inter', sans-serif" },
+    font: { family: "'Source Sans 3', 'Inter', sans-serif", size: 14 },
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     margin: { l: 50, r: 20, t: 10, b: 50 },
@@ -33,7 +33,28 @@
 
   var stats = null;
   var manifest = null;
+  var compressedStats = null;
   var fields = ['Vx', 'Vy', 'Pressure', 'TKE'];
+
+  var COMPRESSED_LABELS = {
+    'offline_base': 'Batch Base',
+    'offline_medium': 'Batch Medium',
+    'offline_large': 'Batch Large',
+    'online_naive_base': 'Online Naive Base',
+    'boosted_base': 'CL Boosted Base',
+    'boosted_medium': 'CL Boosted Medium',
+    'boosted_large': 'CL Boosted Large',
+  };
+
+  var COMPRESSED_COLORS = {
+    'offline_base': '#85C1E9',
+    'offline_medium': '#5DADE2',
+    'offline_large': '#2E86C1',
+    'online_naive_base': '#EF553B',
+    'boosted_base': '#82E0AA',
+    'boosted_medium': '#27AE60',
+    'boosted_large': '#1E8449',
+  };
 
   // ── Page Navigation ─────────────────────────────────────────────────
   window.switchPage = function (pageId) {
@@ -58,17 +79,20 @@
       case 'temporal': renderTemporalPage(); break;
       case 'compression': renderCompressionPage(); break;
       case 'comparison': renderComparisonPage(); break;
+      case 'distcompare': renderDistComparePage(); break;
     }
   }
 
   // ── Init ──────────────────────────────────────────────────────────────
   async function init() {
-    var [statsResp, manifestResp] = await Promise.all([
+    var [statsResp, manifestResp, compResp] = await Promise.all([
       fetch('data/dataset_stats.json'),
       fetch('data/manifest.json'),
+      fetch('data/compressed_stats.json'),
     ]);
     stats = await statsResp.json();
     manifest = await manifestResp.json();
+    try { compressedStats = await compResp.json(); } catch (e) { compressedStats = null; }
 
     renderOverviewPage();
     // Mark overview as rendered
@@ -821,6 +845,212 @@
     });
 
     Plotly.react('chart-size-quality', traces, layout, { responsive: true, displayModeBar: false });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // DISTRIBUTION BEFORE vs AFTER PAGE
+  // ══════════════════════════════════════════════════════════════════════
+  function renderDistComparePage() {
+    if (!compressedStats) return;
+    renderDistComparison();
+    renderDistCompareAll();
+    renderDist4Panel();
+  }
+
+  window.renderDistComparison = function () {
+    if (!compressedStats) return;
+    var field = document.getElementById('distcomp-field').value;
+    var model = document.getElementById('distcomp-model').value;
+
+    var orig = compressedStats.original[field];
+    var comp = compressedStats[model] ? compressedStats[model][field] : null;
+    if (!orig) return;
+
+    var centers = [];
+    for (var i = 0; i < orig.counts.length; i++) {
+      centers.push((orig.edges[i] + orig.edges[i + 1]) / 2);
+    }
+
+    // Normalize to relative frequency
+    var origTotal = orig.counts.reduce(function (a, b) { return a + b; }, 0);
+    var origFreq = orig.counts.map(function (c) { return c / origTotal; });
+
+    var traces = [{
+      type: 'scatter',
+      x: centers,
+      y: origFreq,
+      mode: 'lines',
+      name: 'Original',
+      line: { color: COLORS[field], width: 2.5 },
+      fill: 'tozeroy',
+      fillcolor: COLORS[field] + '20',
+    }];
+
+    if (comp) {
+      var compTotal = comp.counts.reduce(function (a, b) { return a + b; }, 0);
+      var compFreq = comp.counts.map(function (c) { return c / compTotal; });
+      traces.push({
+        type: 'scatter',
+        x: centers,
+        y: compFreq,
+        mode: 'lines',
+        name: COMPRESSED_LABELS[model] || model,
+        line: { color: COMPRESSED_COLORS[model] || '#FF6692', width: 2.5, dash: 'dot' },
+        fill: 'tozeroy',
+        fillcolor: (COMPRESSED_COLORS[model] || '#FF6692') + '15',
+      });
+    }
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 460,
+      xaxis: { title: 'Normalized Value [0, 1]' },
+      yaxis: { title: 'Relative Frequency' },
+      legend: { orientation: 'h', y: -0.12, font: { size: 13 } },
+      margin: { l: 60, r: 20, t: 10, b: 50 },
+    });
+
+    Plotly.react('chart-dist-overlay', traces, layout, { responsive: true, displayModeBar: false });
+
+    // Metrics
+    var container = document.getElementById('distcomp-metrics');
+    if (comp) {
+      var meanShift = Math.abs(comp.mean - orig.mean);
+      var stdShift = Math.abs(comp.std - orig.std);
+      // KL-like divergence approximation
+      var distortion = 0;
+      for (var i = 0; i < origFreq.length; i++) {
+        var p = origFreq[i] + 1e-10;
+        var q = (comp ? compFreq[i] : origFreq[i]) + 1e-10;
+        distortion += p * Math.log(p / q);
+      }
+      container.innerHTML =
+        '<div class="metric-card"><span class="metric-value">' + orig.mean.toFixed(4) +
+        '</span><span class="metric-label">Original Mean</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + comp.mean.toFixed(4) +
+        '</span><span class="metric-label">Compressed Mean</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + meanShift.toFixed(4) +
+        '</span><span class="metric-label">Mean Shift</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + orig.std.toFixed(4) +
+        '</span><span class="metric-label">Original Std</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + comp.std.toFixed(4) +
+        '</span><span class="metric-label">Compressed Std</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + distortion.toFixed(4) +
+        '</span><span class="metric-label">KL Divergence</span></div>';
+    } else {
+      container.innerHTML = '<div class="info-box">No compressed data available for this model.</div>';
+    }
+  };
+
+  window.renderDistCompareAll = function () {
+    if (!compressedStats) return;
+    var field = document.getElementById('distcomp-field-all').value;
+    var orig = compressedStats.original[field];
+    if (!orig) return;
+
+    var modelKeys = Object.keys(compressedStats).filter(function (k) { return k !== 'original'; });
+
+    var barData = [{ name: 'Original', mean: orig.mean, std: orig.std }];
+    modelKeys.forEach(function (k) {
+      if (compressedStats[k][field]) {
+        barData.push({
+          name: COMPRESSED_LABELS[k] || k,
+          mean: compressedStats[k][field].mean,
+          std: compressedStats[k][field].std,
+        });
+      }
+    });
+
+    var traces = [
+      {
+        type: 'bar',
+        name: 'Mean',
+        x: barData.map(function (d) { return d.name; }),
+        y: barData.map(function (d) { return d.mean; }),
+        marker: { color: barData.map(function (d, i) { return i === 0 ? COLORS[field] : '#85C1E9'; }) },
+        error_y: {
+          type: 'data',
+          array: barData.map(function (d) { return d.std; }),
+          visible: true,
+          color: '#666',
+        },
+      },
+    ];
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 420,
+      yaxis: { title: 'Value (mean +/- std)' },
+      showlegend: false,
+      margin: { l: 60, r: 20, t: 10, b: 100 },
+      xaxis: { tickangle: -25 },
+    });
+
+    Plotly.react('chart-dist-all', traces, layout, { responsive: true, displayModeBar: false });
+  };
+
+  function renderDist4Panel() {
+    if (!compressedStats || !compressedStats['offline_large']) return;
+
+    var traces = [];
+    var fieldList = ['Vx', 'Vy', 'Pressure', 'TKE'];
+
+    fieldList.forEach(function (field, fi) {
+      var orig = compressedStats.original[field];
+      var comp = compressedStats['offline_large'][field];
+      if (!orig || !comp) return;
+
+      var centers = [];
+      for (var i = 0; i < orig.counts.length; i++) {
+        centers.push((orig.edges[i] + orig.edges[i + 1]) / 2);
+      }
+      var origTotal = orig.counts.reduce(function (a, b) { return a + b; }, 0);
+      var compTotal = comp.counts.reduce(function (a, b) { return a + b; }, 0);
+
+      traces.push({
+        type: 'scatter',
+        x: centers,
+        y: orig.counts.map(function (c) { return c / origTotal; }),
+        mode: 'lines',
+        name: fi === 0 ? 'Original' : undefined,
+        showlegend: fi === 0,
+        legendgroup: 'original',
+        line: { color: COLORS[field], width: 2 },
+        xaxis: 'x' + (fi + 1),
+        yaxis: 'y' + (fi + 1),
+      });
+      traces.push({
+        type: 'scatter',
+        x: centers,
+        y: comp.counts.map(function (c) { return c / compTotal; }),
+        mode: 'lines',
+        name: fi === 0 ? 'Batch Large' : undefined,
+        showlegend: fi === 0,
+        legendgroup: 'compressed',
+        line: { color: COMPRESSED_COLORS['offline_large'], width: 2, dash: 'dot' },
+        xaxis: 'x' + (fi + 1),
+        yaxis: 'y' + (fi + 1),
+      });
+    });
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 500,
+      grid: { rows: 2, columns: 2, pattern: 'independent', xgap: 0.08, ygap: 0.12 },
+      legend: { orientation: 'h', y: -0.08, font: { size: 13 } },
+      margin: { l: 50, r: 20, t: 30, b: 50 },
+      annotations: fieldList.map(function (f, i) {
+        var row = Math.floor(i / 2);
+        var col = i % 2;
+        return {
+          text: '<b>' + f + '</b>',
+          xref: 'x' + (i + 1) + ' domain',
+          yref: 'y' + (i + 1) + ' domain',
+          x: 0.5, y: 1.12,
+          showarrow: false,
+          font: { size: 14, color: COLORS[f] },
+        };
+      }),
+    });
+
+    Plotly.react('chart-dist-4panel', traces, layout, { responsive: true, displayModeBar: false });
   }
 
   // ── Bootstrap ─────────────────────────────────────────────────────

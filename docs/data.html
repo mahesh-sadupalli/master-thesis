@@ -25,6 +25,7 @@
         <option value="temporal">Temporal Evolution</option>
         <option value="compression">Compression Results</option>
         <option value="comparison">Model Comparison</option>
+        <option value="distcompare">Distribution: Before vs After</option>
       </select>
       <a href="index.html" class="header-link">Compression Demo &rarr;</a>
     </div>
@@ -308,6 +309,70 @@
 
     <h2 class="dash-section-title">Model Size vs Quality Trade-off</h2>
     <div id="chart-size-quality" class="chart-container chart-tall"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Distribution Before vs After Compression
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-distcompare" class="dash-page">
+
+    <h2 class="dash-section-title">Distribution: Before vs After Compression</h2>
+    <p class="dash-caption">
+      Compare the original data distribution against the compressed (predicted) output
+      from each trained model. Closer overlap indicates better reconstruction fidelity.
+    </p>
+
+    <div class="control-inline">
+      <label>Field</label>
+      <select id="distcomp-field" onchange="renderDistComparison()">
+        <option value="Vx">Vx</option>
+        <option value="Vy">Vy</option>
+        <option value="Pressure">Pressure</option>
+        <option value="TKE">TKE</option>
+      </select>
+      <label style="margin-left:16px">Model</label>
+      <select id="distcomp-model" onchange="renderDistComparison()">
+        <option value="offline_base">Batch &mdash; Base (6.7K params)</option>
+        <option value="offline_medium">Batch &mdash; Medium (14.6K params)</option>
+        <option value="offline_large" selected>Batch &mdash; Large (25.7K params)</option>
+        <option value="online_naive_base">Online Naive &mdash; Base</option>
+        <option value="boosted_base">CL Boosted &mdash; Base</option>
+        <option value="boosted_medium">CL Boosted &mdash; Medium</option>
+        <option value="boosted_large">CL Boosted &mdash; Large</option>
+      </select>
+    </div>
+
+    <div id="chart-dist-overlay" class="chart-container chart-tall"></div>
+
+    <div class="metrics-row" id="distcomp-metrics"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">All Models &mdash; Distribution Shift Summary</h2>
+    <p class="dash-caption">
+      Mean and standard deviation of each field: original vs all compressed models.
+    </p>
+
+    <div class="control-inline">
+      <label>Field</label>
+      <select id="distcomp-field-all" onchange="renderDistCompareAll()">
+        <option value="Vx">Vx</option>
+        <option value="Vy">Vy</option>
+        <option value="Pressure">Pressure</option>
+        <option value="TKE">TKE</option>
+      </select>
+    </div>
+
+    <div id="chart-dist-all" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Batch Models &mdash; All Fields Distribution Overlay</h2>
+    <p class="dash-caption">
+      Comparing original vs best offline model (Large) across all four field variables.
+    </p>
+    <div id="chart-dist-4panel" class="chart-container chart-tall"></div>
+
   </section>
 
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
