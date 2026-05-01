@@ -2,10 +2,10 @@
 #dashboard-content {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: 0 var(--pad) 40px;
+  padding: 0 var(--pad) 48px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .dash-card {
@@ -21,7 +21,7 @@
 }
 
 .dash-card-header {
-  padding: 14px 20px 10px;
+  padding: 16px 24px 12px;
   border-bottom: 1px solid var(--border-light);
   background: var(--bg-elevated);
   display: flex;
@@ -30,19 +30,19 @@
 }
 
 .dash-card-header h3 {
-  font-size: 0.88rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--accent2);
   margin: 0;
 }
 
 .dash-card-sub {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .dash-card-body {
-  padding: 18px 20px;
+  padding: 22px 24px;
 }
 
 .dash-card-body canvas {
@@ -59,10 +59,10 @@
 
 .stats-table th {
   text-align: left;
-  padding: 10px 12px;
-  font-size: 0.68rem;
+  padding: 12px 14px;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
   border-bottom: 2px solid var(--border);
   font-weight: 600;
@@ -70,11 +70,11 @@
 }
 
 .stats-table td {
-  padding: 12px 12px;
+  padding: 13px 14px;
   color: var(--text);
   border-bottom: 1px solid var(--border-light);
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
 }
 
 .stats-table tr:last-child td {
