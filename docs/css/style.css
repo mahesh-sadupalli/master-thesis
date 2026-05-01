@@ -4,7 +4,7 @@
 :root {
   --bg:          #ffffff;
   --bg-card:     #ffffff;
-  --bg-elevated: #f8f9fc;
+  --bg-elevated: #ffffff;
   --bg-metric:   linear-gradient(135deg, #f8f9fc 0%, #e8ecf4 100%);
   --text:        #1a1a2e;
   --text-dim:    #4a5568;
@@ -28,10 +28,10 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--bg-elevated);
+  background: #ffffff;
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.65;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
