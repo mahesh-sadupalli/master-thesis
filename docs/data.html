@@ -7,175 +7,317 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=15">
-  <link rel="stylesheet" href="css/dashboard.css?v=3">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="stylesheet" href="css/dashboard.css?v=10">
 </head>
 <body>
 
-  <!-- ── Header ──────────────────────────────────────────────────────── -->
-  <header id="page-header">
-    <div class="header-content">
-      <h1>Data Dashboard</h1>
-      <p class="subtitle">Statistical Analysis of 7.9M Spatio-Temporal Samples &mdash; Vortex Shedding CFD</p>
+  <!-- ── Header Row ─────────────────────────────────────────────────── -->
+  <header class="dash-header">
+    <div class="dash-header-left">
+      <h1>Neural Compression Dashboard</h1>
     </div>
-    <nav class="page-nav">
-      <a href="index.html" class="nav-link">Compression Demo</a>
-      <a href="data.html" class="nav-link active">Data Dashboard</a>
-    </nav>
+    <div class="dash-header-right">
+      <select id="page-nav" class="nav-select" onchange="switchPage(this.value)">
+        <option value="overview" selected>Overview</option>
+        <option value="distributions">Feature Distributions</option>
+        <option value="correlations">Correlation Analysis</option>
+        <option value="temporal">Temporal Evolution</option>
+        <option value="compression">Compression Results</option>
+        <option value="comparison">Model Comparison</option>
+      </select>
+      <a href="index.html" class="header-link">Compression Demo &rarr;</a>
+    </div>
   </header>
 
-  <!-- ── Intro ────────────────────────────────────────────────────────── -->
-  <section class="page-intro">
-    <p>
-      Statistical overview of the <strong>vortex shedding CFD dataset</strong> used to evaluate neural compression methods.
-      The dataset contains <strong>7.9M spatio-temporal samples</strong> across 300 timesteps with 4 field variables
-      (Vx, Vy, Pressure, TKE) mapped on an unstructured mesh of 26,397 spatial points.
-    </p>
-  </section>
-  <hr class="section-divider">
+  <!-- ── Intro Line ─────────────────────────────────────────────────── -->
+  <p class="dash-intro">
+    Interactive exploration of <strong>7.9M spatio-temporal samples</strong> from a scientific simulation dataset.
+    Four field variables (Vx, Vy, Pressure, TKE) mapped across <strong>300 timesteps</strong> on <strong>26,397 spatial points</strong>.
+    All values min-max normalized to [0, 1].
+  </p>
+  <hr class="dash-divider">
 
-  <!-- ── Summary Metrics ─────────────────────────────────────────────── -->
-  <section id="metrics-bar">
-    <div class="metric-card">
-      <span class="metric-value">7,919,100</span>
-      <span class="metric-label">Total Samples</span>
-    </div>
-    <div class="metric-card">
-      <span class="metric-value">300</span>
-      <span class="metric-label">Timesteps</span>
-    </div>
-    <div class="metric-card">
-      <span class="metric-value">26,397</span>
-      <span class="metric-label">Points / Timestep</span>
-    </div>
-    <div class="metric-card">
-      <span class="metric-value">4</span>
-      <span class="metric-label">Input Coords (x,y,z,t)</span>
-    </div>
-    <div class="metric-card">
-      <span class="metric-value">4</span>
-      <span class="metric-label">Target Variables</span>
-    </div>
-    <div class="metric-card highlight">
-      <span class="metric-value">120.8 MB</span>
-      <span class="metric-label">Dataset Size (float32)</span>
-    </div>
-  </section>
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Overview
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-overview" class="dash-page active">
 
-  <!-- ── Dashboard Grid ──────────────────────────────────────────────── -->
-  <section id="dashboard-content">
+    <!-- At a Glance Cards -->
+    <div class="glance-row">
+      <div class="glance-card">
+        <div class="glance-highlight blue">4 Input Coordinates</div>
+        <p>Spatial position (x, y, z) and temporal index (t)</p>
+      </div>
+      <div class="glance-card">
+        <div class="glance-highlight green">4 Field Variables</div>
+        <p>Velocity (Vx, Vy), Pressure (P), Turbulent Kinetic Energy (TKE)</p>
+      </div>
+      <div class="glance-card">
+        <div class="glance-highlight orange">300 Timesteps</div>
+        <p>Sequential temporal snapshots of the simulation domain</p>
+      </div>
+      <div class="glance-card">
+        <div class="glance-highlight red">3 Model Sizes</div>
+        <p>Base (6.7K), Medium (14.6K), Large (25.7K) parameters</p>
+      </div>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Key Metrics -->
+    <h2 class="dash-section-title">Key Metrics</h2>
+    <div class="metrics-row" id="overview-metrics"></div>
+
+    <hr class="dash-divider">
+
+    <!-- Two-column: Radar + Bar -->
+    <div class="two-col">
+      <div class="col-panel">
+        <h2 class="dash-section-title">Field Variable Profile (Radar)</h2>
+        <div class="control-inline">
+          <label>Compare fields</label>
+          <div class="check-group" id="radar-checks"></div>
+        </div>
+        <div id="chart-radar" class="chart-container"></div>
+      </div>
+      <div class="col-panel">
+        <h2 class="dash-section-title">Compression Quality by Model</h2>
+        <div class="control-inline">
+          <label>Metric</label>
+          <select id="quality-metric-select" onchange="renderQualityBar()">
+            <option value="psnr">PSNR (dB)</option>
+            <option value="ssim">SSIM</option>
+            <option value="rel_error">Relative Error (%)</option>
+          </select>
+        </div>
+        <div id="chart-quality-bar" class="chart-container"></div>
+      </div>
+    </div>
+
+    <hr class="dash-divider">
 
     <!-- Descriptive Statistics Table -->
-    <div class="dash-card wide">
-      <div class="dash-card-header">
-        <h3>Descriptive Statistics</h3>
-        <span class="dash-card-sub">All values after min-max normalization to [0, 1]</span>
+    <h2 class="dash-section-title">Descriptive Statistics</h2>
+    <p class="dash-caption">All values after min-max normalization to [0, 1] range.</p>
+    <div class="table-wrap">
+      <table class="dash-table" id="desc-stats-table">
+        <thead>
+          <tr>
+            <th>Variable</th><th>Count</th><th>Mean</th><th>Median</th>
+            <th>Std Dev</th><th>Skewness</th><th>Kurtosis</th>
+            <th>Q1</th><th>Q3</th><th>IQR</th>
+          </tr>
+        </thead>
+        <tbody id="desc-stats-body"></tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Correlation Heatmap -->
+    <h2 class="dash-section-title">Field Variable Correlation Matrix</h2>
+    <p class="dash-caption">Pearson correlation coefficients between all field variables across 7.9M samples.</p>
+    <div id="chart-corr-overview" class="chart-container"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Feature Distributions
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-distributions" class="dash-page">
+
+    <h2 class="dash-section-title">Feature Distributions</h2>
+    <p class="dash-caption">Histograms with 80 bins across the normalized [0, 1] range.</p>
+    <div class="control-inline">
+      <label>Field variable</label>
+      <select id="hist-field-select" onchange="renderHistogram()">
+        <option value="Vx">Vx</option>
+        <option value="Vy">Vy</option>
+        <option value="Pressure">Pressure</option>
+        <option value="TKE">TKE</option>
+      </select>
+    </div>
+    <div id="chart-histogram" class="chart-container"></div>
+    <div class="metrics-row" id="hist-metrics"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">All Fields &mdash; Distribution Comparison</h2>
+    <div id="chart-all-distributions" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Box Plots &mdash; Quartile Summary</h2>
+    <p class="dash-caption">Box: Q1&ndash;Q3 | Line: Median | Diamond: Mean | Whiskers: P5&ndash;P95</p>
+    <div id="chart-boxplots" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">TKE Distribution Imbalance</h2>
+    <p class="dash-caption">TKE is heavily right-skewed &mdash; most samples have near-zero values.</p>
+    <div class="metrics-row" id="tke-metrics"></div>
+    <div class="info-box" id="tke-info"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Correlation Analysis
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-correlations" class="dash-page">
+
+    <h2 class="dash-section-title">Field Variable Correlations</h2>
+    <div id="chart-corr-full" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Pairwise Correlation Strengths</h2>
+    <div id="chart-corr-pairs" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <div class="two-col">
+      <div class="col-panel">
+        <h3 class="dash-section-title">Key Observations</h3>
+        <ul class="obs-list">
+          <li><strong>TKE vs Vy</strong> (r = &minus;0.52): Strongest correlation &mdash; higher velocity fluctuations associate with lower turbulent kinetic energy</li>
+          <li><strong>TKE vs Vx</strong> (r = &minus;0.41): Moderate negative correlation</li>
+          <li><strong>Pressure</strong> is nearly uncorrelated with velocity components</li>
+        </ul>
       </div>
-      <div class="dash-card-body">
-        <table class="stats-table" id="desc-stats-table">
-          <thead>
-            <tr>
-              <th>Variable</th>
-              <th>Count</th>
-              <th>Mean</th>
-              <th>Median</th>
-              <th>Std Dev</th>
-              <th>Skewness</th>
-              <th>Kurtosis</th>
-              <th>Min</th>
-              <th>Q1</th>
-              <th>Q3</th>
-              <th>Max</th>
-              <th>IQR</th>
-            </tr>
-          </thead>
-          <tbody id="desc-stats-body"></tbody>
-        </table>
+      <div class="col-panel">
+        <h3 class="dash-section-title">Implications for Compression</h3>
+        <ul class="obs-list">
+          <li>Correlated fields (Vx&ndash;Vy&ndash;TKE) can benefit from shared representations</li>
+          <li>Pressure&rsquo;s independence suggests it may need separate attention</li>
+          <li>Multi-output models must balance these varying correlations</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Temporal Evolution
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-temporal" class="dash-page">
+
+    <h2 class="dash-section-title">Temporal Evolution of Field Variables</h2>
+    <p class="dash-caption">Mean &plusmn; 1 standard deviation across all spatial points per timestep.</p>
+    <div class="control-inline">
+      <label>Fields</label>
+      <div class="check-group" id="temporal-checks"></div>
+    </div>
+    <div id="chart-temporal" class="chart-container chart-tall"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Temporal Variability Summary</h2>
+    <div class="table-wrap">
+      <table class="dash-table" id="temporal-stats-table">
+        <thead>
+          <tr>
+            <th>Variable</th><th>Mean (avg)</th><th>Mean (min)</th>
+            <th>Mean (max)</th><th>Std (avg)</th><th>Temporal Range</th>
+          </tr>
+        </thead>
+        <tbody id="temporal-stats-body"></tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Spatial Point Cloud</h2>
+    <p class="dash-caption">2,640 sampled points from the 26,397-point spatial mesh at t=0.</p>
+    <div id="chart-spatial" class="chart-container"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Compression Results
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-compression" class="dash-page">
+
+    <h2 class="dash-section-title">Compression Results &mdash; INR Models</h2>
+    <p class="dash-caption">
+      Implicit Neural Representation models mapping (x, y, z, t) &rarr; (Vx, Vy, P, TKE).
+      Three training approaches compared across three model sizes.
+    </p>
+    <div class="table-wrap">
+      <table class="dash-table" id="compression-table">
+        <thead>
+          <tr>
+            <th>Approach</th><th>Model</th><th>PSNR (dB)</th><th>SSIM</th>
+            <th>Rel. Error (%)</th><th>Parameters</th><th>Size (KB)</th><th>CR</th>
+          </tr>
+        </thead>
+        <tbody id="compression-body"></tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Offline vs Online: PSNR Gap</h2>
+    <p class="dash-caption">How much quality is lost moving from batch training to online streaming?</p>
+    <div id="chart-dumbbell" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Quality Gap: Online vs Offline</h2>
+    <div id="chart-gap" class="chart-container"></div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Model Comparison
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-comparison" class="dash-page">
+
+    <div class="two-col">
+      <div class="col-panel">
+        <h2 class="dash-section-title">Model Quality Profile (Radar)</h2>
+        <div class="control-inline">
+          <label>Approach</label>
+          <select id="model-approach-select" onchange="renderModelRadar()">
+            <option value="offline">Batch (Offline)</option>
+            <option value="online">Online (Naive)</option>
+            <option value="boosted">CL Boosted (ER Aggressive)</option>
+          </select>
+        </div>
+        <div id="chart-model-radar" class="chart-container"></div>
+      </div>
+      <div class="col-panel">
+        <h2 class="dash-section-title">SSIM by Model &amp; Approach</h2>
+        <div id="chart-ssim-bar" class="chart-container"></div>
       </div>
     </div>
 
-    <!-- Distributions -->
-    <div class="dash-card wide">
-      <div class="dash-card-header">
-        <h3>Feature Distributions</h3>
-        <span class="dash-card-sub">Histograms with 80 bins &mdash; normalized [0, 1] range</span>
-      </div>
-      <div class="dash-card-body">
-        <canvas id="chart-distributions" height="220"></canvas>
-      </div>
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Continual Learning Effectiveness</h2>
+    <p class="dash-caption">How much does Experience Replay recover from catastrophic forgetting?</p>
+    <div class="metrics-row" id="cl-metrics"></div>
+    <div class="table-wrap">
+      <table class="dash-table" id="cl-table">
+        <thead>
+          <tr>
+            <th>Model</th><th>Naive PSNR</th><th>CL Boosted PSNR</th>
+            <th>Offline PSNR</th><th>Recovery (dB)</th><th>Recovery (%)</th>
+          </tr>
+        </thead>
+        <tbody id="cl-body"></tbody>
+      </table>
     </div>
 
-    <!-- Box Plots -->
-    <div class="dash-card">
-      <div class="dash-card-header">
-        <h3>Box Plots</h3>
-        <span class="dash-card-sub">Quartiles &amp; outlier range</span>
-      </div>
-      <div class="dash-card-body">
-        <canvas id="chart-boxplots" height="300"></canvas>
-      </div>
-    </div>
+    <hr class="dash-divider">
 
-    <!-- Correlation Matrix -->
-    <div class="dash-card">
-      <div class="dash-card-header">
-        <h3>Correlation Matrix</h3>
-        <span class="dash-card-sub">Pearson correlation coefficients</span>
-      </div>
-      <div class="dash-card-body">
-        <canvas id="chart-correlation" height="300"></canvas>
-      </div>
-    </div>
-
-    <!-- Spatial Mesh -->
-    <div class="dash-card">
-      <div class="dash-card-header">
-        <h3>Spatial Mesh</h3>
-        <span class="dash-card-sub">Point cloud at t=0 &mdash; unstructured CFD mesh</span>
-      </div>
-      <div class="dash-card-body">
-        <canvas id="chart-spatial" height="260"></canvas>
-      </div>
-    </div>
-
-    <!-- TKE Skewness Detail -->
-    <div class="dash-card">
-      <div class="dash-card-header">
-        <h3>TKE Imbalance</h3>
-        <span class="dash-card-sub">Heavily right-skewed distribution</span>
-      </div>
-      <div class="dash-card-body" id="tke-detail">
-      </div>
-    </div>
-
-    <!-- Temporal Trends -->
-    <div class="dash-card wide">
-      <div class="dash-card-header">
-        <h3>Temporal Evolution</h3>
-        <span class="dash-card-sub">Mean &plusmn; 1&sigma; across all spatial points per timestep</span>
-      </div>
-      <div class="dash-card-body">
-        <canvas id="chart-temporal" height="220"></canvas>
-      </div>
-    </div>
-
-    <!-- Coordinate Space -->
-    <div class="dash-card wide">
-      <div class="dash-card-header">
-        <h3>Coordinate Space Summary</h3>
-        <span class="dash-card-sub">Input domain ranges</span>
-      </div>
-      <div class="dash-card-body" id="coord-summary">
-      </div>
-    </div>
-
+    <h2 class="dash-section-title">Model Size vs Quality Trade-off</h2>
+    <div id="chart-size-quality" class="chart-container chart-tall"></div>
   </section>
 
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
-  <footer>
-    <p>Master Thesis &mdash; BTU Cottbus-Senftenberg &bull; Mahesh Sadupalli &bull; M.Sc. Artificial Intelligence</p>
+  <footer class="dash-footer">
+    Built by <strong>Mahesh Sadupalli</strong> &nbsp;|&nbsp;
+    Master Thesis &mdash; BTU Cottbus-Senftenberg &nbsp;|&nbsp;
+    M.Sc. Artificial Intelligence &nbsp;|&nbsp;
+    7.9M spatio-temporal samples
   </footer>
 
-  <script src="js/dashboard.js?v=3"></script>
+  <script src="js/dashboard.js?v=10"></script>
 </body>
 </html>
