@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Dashboard — Neural Network Compression</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=14">
+  <link rel="stylesheet" href="css/dashboard.css?v=3">
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header id="page-header">
+    <div class="header-content">
+      <h1>Data Dashboard</h1>
+      <p class="subtitle">Statistical Analysis of 7.9M Spatio-Temporal Samples &mdash; Vortex Shedding CFD</p>
+    </div>
+    <nav class="page-nav">
+      <a href="index.html" class="nav-link">Compression Demo</a>
+      <a href="data.html" class="nav-link active">Data Dashboard</a>
+    </nav>
+  </header>
+
+  <!-- ── Summary Metrics ─────────────────────────────────────────────── -->
+  <section id="metrics-bar">
+    <div class="metric-card">
+      <span class="metric-value">7,919,100</span>
+      <span class="metric-label">Total Samples</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">300</span>
+      <span class="metric-label">Timesteps</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">26,397</span>
+      <span class="metric-label">Points / Timestep</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">4</span>
+      <span class="metric-label">Input Coords (x,y,z,t)</span>
+    </div>
+    <div class="metric-card">
+      <span class="metric-value">4</span>
+      <span class="metric-label">Target Variables</span>
+    </div>
+    <div class="metric-card highlight">
+      <span class="metric-value">120.8 MB</span>
+      <span class="metric-label">Dataset Size (float32)</span>
+    </div>
+  </section>
+
+  <!-- ── Dashboard Grid ──────────────────────────────────────────────── -->
+  <section id="dashboard-content">
+
+    <!-- Descriptive Statistics Table -->
+    <div class="dash-card wide">
+      <div class="dash-card-header">
+        <h3>Descriptive Statistics</h3>
+        <span class="dash-card-sub">All values after min-max normalization to [0, 1]</span>
+      </div>
+      <div class="dash-card-body">
+        <table class="stats-table" id="desc-stats-table">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Count</th>
+              <th>Mean</th>
+              <th>Median</th>
+              <th>Std Dev</th>
+              <th>Skewness</th>
+              <th>Kurtosis</th>
+              <th>Min</th>
+              <th>Q1</th>
+              <th>Q3</th>
+              <th>Max</th>
+              <th>IQR</th>
+            </tr>
+          </thead>
+          <tbody id="desc-stats-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Distributions -->
+    <div class="dash-card wide">
+      <div class="dash-card-header">
+        <h3>Feature Distributions</h3>
+        <span class="dash-card-sub">Histograms with 80 bins &mdash; normalized [0, 1] range</span>
+      </div>
+      <div class="dash-card-body">
+        <canvas id="chart-distributions" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Box Plots -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>Box Plots</h3>
+        <span class="dash-card-sub">Quartiles &amp; outlier range</span>
+      </div>
+      <div class="dash-card-body">
+        <canvas id="chart-boxplots" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- Correlation Matrix -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>Correlation Matrix</h3>
+        <span class="dash-card-sub">Pearson correlation coefficients</span>
+      </div>
+      <div class="dash-card-body">
+        <canvas id="chart-correlation" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- Spatial Mesh -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>Spatial Mesh</h3>
+        <span class="dash-card-sub">Point cloud at t=0 &mdash; unstructured CFD mesh</span>
+      </div>
+      <div class="dash-card-body">
+        <canvas id="chart-spatial" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- TKE Skewness Detail -->
+    <div class="dash-card">
+      <div class="dash-card-header">
+        <h3>TKE Imbalance</h3>
+        <span class="dash-card-sub">Heavily right-skewed distribution</span>
+      </div>
+      <div class="dash-card-body" id="tke-detail">
+      </div>
+    </div>
+
+    <!-- Temporal Trends -->
+    <div class="dash-card wide">
+      <div class="dash-card-header">
+        <h3>Temporal Evolution</h3>
+        <span class="dash-card-sub">Mean &plusmn; 1&sigma; across all spatial points per timestep</span>
+      </div>
+      <div class="dash-card-body">
+        <canvas id="chart-temporal" height="220"></canvas>
+      </div>
+    </div>
+
+    <!-- Coordinate Space -->
+    <div class="dash-card wide">
+      <div class="dash-card-header">
+        <h3>Coordinate Space Summary</h3>
+        <span class="dash-card-sub">Input domain ranges</span>
+      </div>
+      <div class="dash-card-body" id="coord-summary">
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
+  <footer>
+    <p>Master Thesis &mdash; BTU Cottbus-Senftenberg &bull; Mahesh Sadupalli &bull; M.Sc. Artificial Intelligence</p>
+  </footer>
+
+  <script src="js/dashboard.js?v=3"></script>
+</body>
+</html>

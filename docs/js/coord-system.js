@@ -89,7 +89,7 @@ APP.CoordSystem = (function () {
     var h = canvas.height;
     var pad = 48;  // padding for axes
 
-    ctx.fillStyle = '#080810';
+    ctx.fillStyle = '#fafbfc';
     ctx.fillRect(0, 0, w, h);
 
     var plotW = w - pad - 20;
@@ -119,7 +119,7 @@ APP.CoordSystem = (function () {
     function mapY(val) { return plotY + plotH - (val - yMin) / (yMax - yMin) * plotH; }
 
     // Draw grid lines
-    ctx.strokeStyle = '#1a1a2a';
+    ctx.strokeStyle = '#e0e4ed';
     ctx.lineWidth = 0.5;
     for (var i = 0; i <= 5; i++) {
       var gx = plotX + (i / 5) * plotW;
@@ -215,7 +215,7 @@ APP.CoordSystem = (function () {
     }
 
     // Axes
-    ctx.strokeStyle = '#444460';
+    ctx.strokeStyle = '#cbd5e0';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(plotX, plotY);
@@ -225,7 +225,7 @@ APP.CoordSystem = (function () {
 
     // Axis labels
     var labels = axisLabels[projection];
-    ctx.fillStyle = '#8888a0';
+    ctx.fillStyle = '#4a5568';
     ctx.font = '11px -apple-system, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels.x, plotX + plotW / 2, h - 4);
@@ -238,7 +238,7 @@ APP.CoordSystem = (function () {
 
     // Tick values
     ctx.font = '9px ' + getComputedStyle(document.body).getPropertyValue('--font-mono');
-    ctx.fillStyle = '#666680';
+    ctx.fillStyle = '#718096';
     ctx.textAlign = 'center';
     ctx.fillText(xMin.toFixed(3), plotX, plotY + plotH + 14);
     ctx.fillText(xMax.toFixed(3), plotX + plotW, plotY + plotH + 14);
