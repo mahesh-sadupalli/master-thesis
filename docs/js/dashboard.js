@@ -903,7 +903,7 @@
 
     var layout = Object.assign({}, PLOTLY_LAYOUT, {
       height: 460,
-      xaxis: { title: 'Normalized Value [0, 1]' },
+      xaxis: { title: 'Value' },
       yaxis: { title: 'Relative Frequency' },
       legend: { orientation: 'h', y: -0.12, font: { size: 13 } },
       margin: { l: 60, r: 20, t: 10, b: 50 },
@@ -923,19 +923,21 @@
         var q = (comp ? compFreq[i] : origFreq[i]) + 1e-10;
         distortion += p * Math.log(p / q);
       }
+      var compMin = comp.min !== undefined ? comp.min.toFixed(4) : '--';
+      var compMax = comp.max !== undefined ? comp.max.toFixed(4) : '--';
       container.innerHTML =
         '<div class="metric-card"><span class="metric-value">' + orig.mean.toFixed(4) +
         '</span><span class="metric-label">Original Mean</span></div>' +
         '<div class="metric-card"><span class="metric-value">' + comp.mean.toFixed(4) +
-        '</span><span class="metric-label">Compressed Mean</span></div>' +
+        '</span><span class="metric-label">Reconstructed Mean</span></div>' +
         '<div class="metric-card"><span class="metric-value">' + meanShift.toFixed(4) +
         '</span><span class="metric-label">Mean Shift</span></div>' +
         '<div class="metric-card"><span class="metric-value">' + orig.std.toFixed(4) +
         '</span><span class="metric-label">Original Std</span></div>' +
         '<div class="metric-card"><span class="metric-value">' + comp.std.toFixed(4) +
-        '</span><span class="metric-label">Compressed Std</span></div>' +
-        '<div class="metric-card"><span class="metric-value">' + distortion.toFixed(4) +
-        '</span><span class="metric-label">KL Divergence</span></div>';
+        '</span><span class="metric-label">Reconstructed Std</span></div>' +
+        '<div class="metric-card"><span class="metric-value">' + compMin + ' / ' + compMax +
+        '</span><span class="metric-label">Reconstructed Min / Max</span></div>';
     } else {
       container.innerHTML = '<div class="info-box">No compressed data available for this model.</div>';
     }
@@ -947,7 +949,8 @@
     var orig = compressedStats.original[field];
     if (!orig) return;
 
-    var modelKeys = Object.keys(compressedStats).filter(function (k) { return k !== 'original'; });
+    var skipKeys = ['original', 'normalization', 'histogram_ranges'];
+    var modelKeys = Object.keys(compressedStats).filter(function (k) { return skipKeys.indexOf(k) === -1; });
 
     var barData = [{ name: 'Original', mean: orig.mean, std: orig.std }];
     modelKeys.forEach(function (k) {
