@@ -74,6 +74,7 @@
 
   function renderPage(pageId) {
     switch (pageId) {
+      case 'inputdist': renderInputDistPage(); break;
       case 'distributions': renderDistributionsPage(); break;
       case 'correlations': renderCorrelationsPage(); break;
       case 'temporal': renderTemporalPage(); break;
@@ -274,7 +275,131 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // DISTRIBUTIONS PAGE
+  // INPUT DISTRIBUTIONS PAGE
+  // ══════════════════════════════════════════════════════════════════════
+  var inputCoords = ['x', 'y', 't']; // skip z (constant)
+  var inputColors = { x: '#0A2540', y: '#065A82', z: '#999999', t: '#1C7293' };
+  var inputLabels = { x: 'x \u2014 Streamwise', y: 'y \u2014 Cross-stream', z: 'z \u2014 Out-of-plane', t: 't \u2014 Time' };
+
+  function renderInputDistPage() {
+    renderInputHistogram();
+    renderAllInputDistributions();
+    renderInputStatsTable();
+    renderTimeInfo();
+  }
+
+  window.renderInputHistogram = function () {
+    var coord = document.getElementById('input-coord-select').value;
+    var hist = stats[coord + '_hist'];
+    if (!hist) return;
+
+    var centers = [];
+    for (var i = 0; i < hist.counts.length; i++) {
+      centers.push((hist.edges[i] + hist.edges[i + 1]) / 2);
+    }
+
+    var trace = {
+      type: 'bar', x: centers, y: hist.counts,
+      marker: { color: inputColors[coord], opacity: 0.75 },
+      name: coord,
+    };
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 400,
+      xaxis: { title: 'Normalized Value [0, 1]' },
+      yaxis: { title: 'Count' },
+      bargap: 0.02,
+    });
+
+    Plotly.react('chart-input-histogram', [trace], layout, { responsive: true, displayModeBar: false });
+
+    // Metrics
+    var s = stats[coord];
+    if (!s) return;
+    var container = document.getElementById('input-hist-metrics');
+    var rawRange = s.raw_min !== undefined ? '[' + s.raw_min.toFixed(4) + ', ' + s.raw_max.toFixed(4) + ']' : '--';
+    var items = [
+      { value: s.mean.toFixed(4), label: 'Mean (normalized)' },
+      { value: s.median.toFixed(4), label: 'Median' },
+      { value: s.std.toFixed(4), label: 'Std Dev' },
+      { value: s.skewness.toFixed(3), label: 'Skewness' },
+      { value: rawRange, label: 'Raw Physical Range' },
+    ];
+    container.innerHTML = items.map(function (item) {
+      return '<div class="metric-card"><span class="metric-value">' + item.value +
+             '</span><span class="metric-label">' + item.label + '</span></div>';
+    }).join('');
+  };
+
+  function renderAllInputDistributions() {
+    var traces = inputCoords.map(function (c) {
+      var hist = stats[c + '_hist'];
+      if (!hist) return null;
+      var total = hist.counts.reduce(function (a, b) { return a + b; }, 0);
+      var centers = [], freq = [];
+      for (var i = 0; i < hist.counts.length; i++) {
+        centers.push((hist.edges[i] + hist.edges[i + 1]) / 2);
+        freq.push(hist.counts[i] / total);
+      }
+      return {
+        type: 'scatter', x: centers, y: freq,
+        mode: 'lines', name: inputLabels[c],
+        line: { color: inputColors[c], width: 2 },
+        fill: 'tozeroy', fillcolor: inputColors[c] + '18',
+      };
+    }).filter(Boolean);
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 400,
+      xaxis: { title: 'Normalized Value [0, 1]' },
+      yaxis: { title: 'Relative Frequency' },
+      legend: { orientation: 'h', y: -0.15 },
+    });
+
+    Plotly.react('chart-all-inputs', traces, layout, { responsive: true, displayModeBar: false });
+  }
+
+  function renderInputStatsTable() {
+    var tbody = document.getElementById('input-stats-body');
+    var allCoords = ['x', 'y', 'z', 't'];
+    var notes = {
+      x: 'Mesh denser near cylinder (right-skewed)',
+      y: 'Symmetric around 0',
+      z: 'Constant = 0 (2D simulation slice)',
+      t: 't\u2080=0, t\u2081=0.010, then \u0394t\u22480.0001',
+    };
+    tbody.innerHTML = allCoords.map(function (c) {
+      var s = stats[c];
+      if (!s) return '';
+      var rawRange = s.constant ? '0.000' : '[' + s.raw_min.toFixed(4) + ', ' + s.raw_max.toFixed(4) + ']';
+      return '<tr>'
+        + '<td class="var-name" style="color:' + inputColors[c] + '">' + c + '</td>'
+        + '<td>' + rawRange + '</td>'
+        + '<td>' + s.mean.toFixed(4) + '</td>'
+        + '<td>' + s.median.toFixed(4) + '</td>'
+        + '<td>' + s.std.toFixed(4) + '</td>'
+        + '<td>' + s.skewness.toFixed(3) + '</td>'
+        + '<td>' + s.kurtosis.toFixed(3) + '</td>'
+        + '<td>' + (notes[c] || '') + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  function renderTimeInfo() {
+    var info = stats.t_info;
+    if (!info) return;
+    document.getElementById('time-info').innerHTML =
+      '<strong>300 timesteps</strong> in the dataset. ' +
+      'First timestep t\u2080 = 0.000, second t\u2081 = 0.0101 ' +
+      '(<strong>initial gap of ' + info.first_gap + ' s</strong>), ' +
+      'then \u0394t \u2248 ' + info.regular_gap + ' for the remaining 298 timesteps. ' +
+      'The large first gap means the normalized time coordinate is not uniformly distributed \u2014 ' +
+      'the first 26,397 samples (t=0) map to normalized t=0, while the remaining 299 timesteps ' +
+      'are compressed into the [0.253, 1.0] range.';
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // OUTPUT DISTRIBUTIONS PAGE
   // ══════════════════════════════════════════════════════════════════════
   function renderDistributionsPage() {
     renderHistogram();

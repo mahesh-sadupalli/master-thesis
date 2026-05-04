@@ -20,7 +20,8 @@
     <div class="dash-header-right">
       <select id="page-nav" class="nav-select" onchange="switchPage(this.value)">
         <option value="overview" selected>Overview</option>
-        <option value="distributions">Feature Distributions</option>
+        <option value="inputdist">Input Distributions</option>
+        <option value="distributions">Output Distributions</option>
         <option value="correlations">Correlation Analysis</option>
         <option value="temporal">Temporal Evolution</option>
         <option value="compression">Compression Results</option>
@@ -123,7 +124,55 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════════
-       PAGE: Feature Distributions
+       PAGE: Input Distributions (x, y, z, t)
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-inputdist" class="dash-page">
+
+    <h2 class="dash-section-title">Input Coordinate Distributions</h2>
+    <p class="dash-caption">Spatial coordinates (x, y, z) and temporal index (t) &mdash; all normalized to [0, 1].</p>
+
+    <div class="control-inline">
+      <label>Coordinate</label>
+      <select id="input-coord-select" onchange="renderInputHistogram()">
+        <option value="x">x &mdash; Streamwise</option>
+        <option value="y">y &mdash; Cross-stream</option>
+        <option value="t">t &mdash; Time</option>
+      </select>
+    </div>
+    <div id="chart-input-histogram" class="chart-container"></div>
+    <div class="metrics-row" id="input-hist-metrics"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">All Input Coordinates &mdash; Distribution Comparison</h2>
+    <p class="dash-caption">x, y, and t overlaid (z excluded &mdash; constant at 0).</p>
+    <div id="chart-all-inputs" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Coordinate Statistics</h2>
+    <div class="table-wrap">
+      <table class="dash-table" id="input-stats-table">
+        <thead>
+          <tr>
+            <th>Coord</th><th>Raw Range</th><th>Mean</th><th>Median</th>
+            <th>Std Dev</th><th>Skewness</th><th>Kurtosis</th><th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="input-stats-body"></tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <h2 class="dash-section-title">Time Coordinate Detail</h2>
+    <p class="dash-caption">300 timesteps with irregular first gap.</p>
+    <div class="info-box" id="time-info"></div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Output Distributions (Vx, Vy, Pressure, TKE)
        ══════════════════════════════════════════════════════════════════ -->
   <section id="page-distributions" class="dash-page">
 
