@@ -64,10 +64,16 @@
     var target = document.getElementById('page-' + pageId);
     if (target) {
       target.classList.add('active');
-      // Trigger render on first visit
+      // Render on first visit, then resize Plotly charts
       if (!target.dataset.rendered) {
         target.dataset.rendered = '1';
-        renderPage(pageId);
+        // Use setTimeout so the container is visible before Plotly measures it
+        setTimeout(function () { renderPage(pageId); }, 50);
+      } else {
+        // Resize existing charts in case container was hidden
+        target.querySelectorAll('.chart-container').forEach(function (el) {
+          if (el.querySelector('.plotly')) Plotly.Plots.resize(el);
+        });
       }
     }
   };
