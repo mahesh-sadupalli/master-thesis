@@ -288,42 +288,59 @@
     renderTimeInfo();
   }
 
+  function histCenters(hist) {
+    var c = [];
+    for (var i = 0; i < hist.counts.length; i++) {
+      c.push((hist.edges[i] + hist.edges[i + 1]) / 2);
+    }
+    return c;
+  }
+
   window.renderInputHistogram = function () {
     var coord = document.getElementById('input-coord-select').value;
-    var hist = stats[coord + '_hist'];
-    if (!hist) return;
 
-    var centers = [];
-    for (var i = 0; i < hist.counts.length; i++) {
-      centers.push((hist.edges[i] + hist.edges[i + 1]) / 2);
+    // Raw histogram (before normalization)
+    var rawHist = stats[coord + '_raw_hist'];
+    if (rawHist && rawHist.edges[0] !== rawHist.edges[rawHist.edges.length - 1]) {
+      var rawCenters = histCenters(rawHist);
+      Plotly.react('chart-input-raw', [{
+        type: 'bar', x: rawCenters, y: rawHist.counts,
+        marker: { color: inputColors[coord], opacity: 0.75 }, name: coord,
+      }], Object.assign({}, PLOTLY_LAYOUT, {
+        height: 380,
+        xaxis: { title: 'Physical Value' },
+        yaxis: { title: 'Count' },
+        bargap: 0.02,
+      }), { responsive: true, displayModeBar: false });
     }
 
-    var trace = {
-      type: 'bar', x: centers, y: hist.counts,
-      marker: { color: inputColors[coord], opacity: 0.75 },
-      name: coord,
-    };
-
-    var layout = Object.assign({}, PLOTLY_LAYOUT, {
-      height: 400,
-      xaxis: { title: 'Normalized Value [0, 1]' },
-      yaxis: { title: 'Count' },
-      bargap: 0.02,
-    });
-
-    Plotly.react('chart-input-histogram', [trace], layout, { responsive: true, displayModeBar: false });
+    // Normalized histogram (after normalization)
+    var normHist = stats[coord + '_hist'];
+    if (normHist) {
+      var normCenters = histCenters(normHist);
+      Plotly.react('chart-input-norm', [{
+        type: 'bar', x: normCenters, y: normHist.counts,
+        marker: { color: inputColors[coord], opacity: 0.75 }, name: coord,
+      }], Object.assign({}, PLOTLY_LAYOUT, {
+        height: 380,
+        xaxis: { title: 'Normalized [0, 1]' },
+        yaxis: { title: 'Count' },
+        bargap: 0.02,
+      }), { responsive: true, displayModeBar: false });
+    }
 
     // Metrics
     var s = stats[coord];
     if (!s) return;
     var container = document.getElementById('input-hist-metrics');
     var rawRange = s.raw_min !== undefined ? '[' + s.raw_min.toFixed(4) + ', ' + s.raw_max.toFixed(4) + ']' : '--';
+    var rawMean = s.raw_mean !== undefined ? s.raw_mean.toFixed(6) : '--';
     var items = [
-      { value: s.mean.toFixed(4), label: 'Mean (normalized)' },
-      { value: s.median.toFixed(4), label: 'Median' },
-      { value: s.std.toFixed(4), label: 'Std Dev' },
-      { value: s.skewness.toFixed(3), label: 'Skewness' },
       { value: rawRange, label: 'Raw Physical Range' },
+      { value: rawMean, label: 'Raw Mean' },
+      { value: s.mean.toFixed(4), label: 'Normalized Mean' },
+      { value: s.std.toFixed(4), label: 'Normalized Std' },
+      { value: s.skewness.toFixed(3), label: 'Skewness' },
     ];
     container.innerHTML = items.map(function (item) {
       return '<div class="metric-card"><span class="metric-value">' + item.value +
@@ -332,15 +349,13 @@
   };
 
   function renderAllInputDistributions() {
-    var traces = inputCoords.map(function (c) {
-      var hist = stats[c + '_hist'];
-      if (!hist) return null;
+    // Raw overlay
+    var rawTraces = inputCoords.map(function (c) {
+      var hist = stats[c + '_raw_hist'];
+      if (!hist || hist.edges[0] === hist.edges[hist.edges.length - 1]) return null;
       var total = hist.counts.reduce(function (a, b) { return a + b; }, 0);
-      var centers = [], freq = [];
-      for (var i = 0; i < hist.counts.length; i++) {
-        centers.push((hist.edges[i] + hist.edges[i + 1]) / 2);
-        freq.push(hist.counts[i] / total);
-      }
+      var centers = histCenters(hist);
+      var freq = hist.counts.map(function (v) { return v / total; });
       return {
         type: 'scatter', x: centers, y: freq,
         mode: 'lines', name: inputLabels[c],
@@ -349,14 +364,34 @@
       };
     }).filter(Boolean);
 
-    var layout = Object.assign({}, PLOTLY_LAYOUT, {
-      height: 400,
-      xaxis: { title: 'Normalized Value [0, 1]' },
+    Plotly.react('chart-all-inputs-raw', rawTraces, Object.assign({}, PLOTLY_LAYOUT, {
+      height: 380,
+      xaxis: { title: 'Physical Value' },
       yaxis: { title: 'Relative Frequency' },
-      legend: { orientation: 'h', y: -0.15 },
-    });
+      legend: { orientation: 'h', y: -0.18 },
+    }), { responsive: true, displayModeBar: false });
 
-    Plotly.react('chart-all-inputs', traces, layout, { responsive: true, displayModeBar: false });
+    // Normalized overlay
+    var normTraces = inputCoords.map(function (c) {
+      var hist = stats[c + '_hist'];
+      if (!hist) return null;
+      var total = hist.counts.reduce(function (a, b) { return a + b; }, 0);
+      var centers = histCenters(hist);
+      var freq = hist.counts.map(function (v) { return v / total; });
+      return {
+        type: 'scatter', x: centers, y: freq,
+        mode: 'lines', name: inputLabels[c],
+        line: { color: inputColors[c], width: 2 },
+        fill: 'tozeroy', fillcolor: inputColors[c] + '18',
+      };
+    }).filter(Boolean);
+
+    Plotly.react('chart-all-inputs-norm', normTraces, Object.assign({}, PLOTLY_LAYOUT, {
+      height: 380,
+      xaxis: { title: 'Normalized [0, 1]' },
+      yaxis: { title: 'Relative Frequency' },
+      legend: { orientation: 'h', y: -0.18 },
+    }), { responsive: true, displayModeBar: false });
   }
 
   function renderInputStatsTable() {
@@ -372,14 +407,15 @@
       var s = stats[c];
       if (!s) return '';
       var rawRange = s.constant ? '0.000' : '[' + s.raw_min.toFixed(4) + ', ' + s.raw_max.toFixed(4) + ']';
+      var rawMean = s.raw_mean !== undefined ? s.raw_mean.toFixed(6) : '--';
       return '<tr>'
         + '<td class="var-name" style="color:' + inputColors[c] + '">' + c + '</td>'
         + '<td>' + rawRange + '</td>'
+        + '<td>' + rawMean + '</td>'
         + '<td>' + s.mean.toFixed(4) + '</td>'
         + '<td>' + s.median.toFixed(4) + '</td>'
         + '<td>' + s.std.toFixed(4) + '</td>'
         + '<td>' + s.skewness.toFixed(3) + '</td>'
-        + '<td>' + s.kurtosis.toFixed(3) + '</td>'
         + '<td>' + (notes[c] || '') + '</td>'
         + '</tr>';
     }).join('');
