@@ -90,30 +90,6 @@ ER_AGGRESSIVE_DEFAULTS = {
     "replay_batch_size": 20000,
 }
 
-EWC_DEFAULTS = {
-    "ewc_lambda": 1000.0,
-    "fisher_samples": 50000,
-}
-
-LWF_DEFAULTS = {
-    "distill_weight": 0.5,
-}
-
-DERPP_DEFAULTS = {
-    "buffer_size": 10000,
-    "replay_weight": 0.5,
-    "distill_weight": 0.5,
-    "replay_batch_size": 5000,
-}
-
-COMBINED_DEFAULTS = {
-    "buffer_size": 10000,
-    "replay_weight": 0.3,
-    "distill_weight": 0.3,
-    "ewc_lambda": 500.0,
-    "replay_batch_size": 5000,
-}
-
 # ---------------------------------------------------------------------------
 # Offline reference metrics (from previous experiments)
 # ---------------------------------------------------------------------------

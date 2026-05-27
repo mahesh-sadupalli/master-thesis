@@ -31,10 +31,6 @@ from unified_training_utils import (
 from continual_learning.cl_strategies import (
     NaiveStrategy,
     ExperienceReplayStrategy,
-    EWCStrategy,
-    LwFStrategy,
-    DERppStrategy,
-    CombinedStrategy,
 )
 from continual_learning.cl_training import train_online_cl, evaluate_full_dataset
 
@@ -55,31 +51,14 @@ MODELS = {
     'large': LargeCompressor,
 }
 
-# Strategy factories with default hyperparameters
+# Strategy factories with default hyperparameters.
+# Three configurations are evaluated: a Naive baseline (no replay) and two
+# Experience Replay variants of increasing buffer size and replay weight.
 STRATEGIES = {
     'naive': lambda: NaiveStrategy(),
-    'er': lambda: ExperienceReplayStrategy(
-        buffer_size=10000, replay_weight=0.5, replay_batch_size=5000
-    ),
-    'ewc': lambda: EWCStrategy(
-        ewc_lambda=1000.0, fisher_samples=50000
-    ),
-    'lwf': lambda: LwFStrategy(
-        distill_weight=0.5
-    ),
-    'der_pp': lambda: DERppStrategy(
-        buffer_size=10000, replay_weight=0.5, distill_weight=0.5,
-        replay_batch_size=5000
-    ),
-    'combined': lambda: CombinedStrategy(
-        buffer_size=10000, replay_weight=0.3, distill_weight=0.3,
-        ewc_lambda=500.0, replay_batch_size=5000
-    ),
-    # Scaled ER variants: buffer scales with model capacity
     'er_scaled': lambda: ExperienceReplayStrategy(
         buffer_size=50000, replay_weight=0.7, replay_batch_size=10000
     ),
-    # Aggressive ER: large buffer + high replay weight
     'er_aggressive': lambda: ExperienceReplayStrategy(
         buffer_size=100000, replay_weight=1.0, replay_batch_size=20000
     ),
