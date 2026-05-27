@@ -1,17 +1,14 @@
 """
-Buffer Scaling Study: Scaled Experience Replay.
+Online INR with Experience Replay (Aggressive configuration).
 
-Investigates the effect of scaling replay buffer size with model capacity.
-Uses larger buffer (50K) and higher replay weight (0.7) to address the
-finding that standard ER fails on medium/large models.
+Trains the coordinate-based INR sequentially across 20 temporal windows
+with a replay buffer of 100,000 samples and replay weight 1.0.
 """
 
 import sys
 import os
-import torch
 import pandas as pd
 import json
-import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
@@ -22,7 +19,7 @@ from continual_learning.cl_strategies import ExperienceReplayStrategy
 from continual_learning.cl_training import train_online_cl, evaluate_full_dataset
 from continual_learning.experiments.config import (
     DATA_FILE, RESULTS_BASE, get_device, EPOCHS_PER_WINDOW, NUM_WINDOWS,
-    ER_SCALED_DEFAULTS, OFFLINE_REFERENCE
+    ER_AGGRESSIVE_DEFAULTS, OFFLINE_REFERENCE
 )
 
 MODELS = {
@@ -33,39 +30,38 @@ MODELS = {
 
 
 def run(model_name="base"):
-    """Run Scaled Experience Replay experiment for a single model size."""
+    """Run Aggressive Experience Replay experiment for a single model size."""
     device = get_device()
-    print(f"[Environment] Device: {device}")
+    print("[Environment] Device: {}".format(device))
 
-    print(f"[Data] Loading dataset: {DATA_FILE}")
+    print("[Data] Loading dataset: {}".format(DATA_FILE))
     dataset = SpatioTemporalDataset(DATA_FILE)
-    print(f"[Data] Loaded {len(dataset.inputs)} samples")
+    print("[Data] Loaded {} samples".format(len(dataset.inputs)))
 
     model = MODELS[model_name]().to(device)
-    strategy = ExperienceReplayStrategy(**ER_SCALED_DEFAULTS)
-    output_dir = os.path.join(RESULTS_BASE, f"{model_name}_er_scaled")
+    strategy = ExperienceReplayStrategy(**ER_AGGRESSIVE_DEFAULTS)
+    output_dir = os.path.join(RESULTS_BASE, "{}_er_aggressive".format(model_name))
 
-    # Train
     metrics = train_online_cl(
         model=model, dataset=dataset, device=device,
         epochs_per_window=EPOCHS_PER_WINDOW,
-        model_name=f"{model_name}_er_scaled",
+        model_name="{}_er_aggressive".format(model_name),
         output_dir=output_dir, strategy=strategy,
         num_windows=NUM_WINDOWS,
     )
 
-    # Save per-window metrics
     df = pd.DataFrame(metrics)
-    df.to_csv(os.path.join(output_dir, f"{model_name}_er_scaled_metrics.csv"), index=False)
-
-    # Full dataset evaluation
-    full_eval = evaluate_full_dataset(
-        model, dataset, device, model_name=f"{model_name}_er_scaled"
+    df.to_csv(
+        os.path.join(output_dir, "{}_er_aggressive_metrics.csv".format(model_name)),
+        index=False,
     )
 
-    # Save evaluation
+    full_eval = evaluate_full_dataset(
+        model, dataset, device, model_name="{}_er_aggressive".format(model_name)
+    )
+
     eval_data = {
-        "model": f"{model_name}_er_scaled",
+        "model": "{}_er_aggressive".format(model_name),
         "training_mode": "online_streaming",
         "strategy": strategy.get_config(),
         "parameters": sum(p.numel() for p in model.parameters()),
@@ -74,10 +70,11 @@ def run(model_name="base"):
     with open(os.path.join(output_dir, "evaluation_metrics.json"), "w") as f:
         json.dump(eval_data, f, indent=2)
 
-    # Forgetting gap relative to offline
     ref = OFFLINE_REFERENCE[model_name]
-    print(f"[Comparison] Offline reference PSNR: {ref['psnr_db']:.2f} dB")
-    print(f"[Comparison] Gap to offline: {full_eval['psnr_db'] - ref['psnr_db']:.2f} dB")
+    print("[Comparison] Offline reference PSNR: {:.2f} dB".format(ref["psnr_db"]))
+    print("[Comparison] Gap to offline: {:.2f} dB".format(
+        full_eval["psnr_db"] - ref["psnr_db"]
+    ))
 
     return {
         "model": model_name,
@@ -91,21 +88,26 @@ def run(model_name="base"):
 
 
 def run_all():
-    """Run Scaled Experience Replay experiment across all model sizes."""
+    """Run Aggressive Experience Replay experiment across all model sizes."""
     results = []
     for model_name in MODELS:
         result = run(model_name)
         results.append(result)
 
-    print(f"\n[Summary] Scaled Experience Replay (buffer={ER_SCALED_DEFAULTS['buffer_size']}, "
-          f"weight={ER_SCALED_DEFAULTS['replay_weight']})")
-    print(f"{'Model':<10} {'Window PSNR':>12} {'Full PSNR':>10} {'Drop':>8} {'SSIM':>8} {'RE%':>8} {'Time':>8}")
+    print("\n[Summary] Aggressive Experience Replay (buffer={}, weight={})".format(
+        ER_AGGRESSIVE_DEFAULTS["buffer_size"],
+        ER_AGGRESSIVE_DEFAULTS["replay_weight"],
+    ))
+    print("{:<10} {:>12} {:>10} {:>8} {:>8} {:>8} {:>8}".format(
+        "Model", "Window PSNR", "Full PSNR", "Drop", "SSIM", "RE%", "Time"
+    ))
     print("-" * 68)
     for r in results:
-        print(f"{r['model']:<10} {r['last_window_psnr']:>10.2f} dB "
-              f"{r['full_dataset_psnr']:>8.2f} dB {r['psnr_drop']:>6.2f} dB "
-              f"{r['full_dataset_ssim']:>8.4f} {r['full_dataset_re']:>7.2f}% "
-              f"{r['total_time']:>7.1f}s")
+        print("{:<10} {:>10.2f} dB {:>8.2f} dB {:>6.2f} dB {:>8.4f} {:>7.2f}% {:>7.1f}s".format(
+            r["model"], r["last_window_psnr"], r["full_dataset_psnr"],
+            r["psnr_drop"], r["full_dataset_ssim"], r["full_dataset_re"],
+            r["total_time"],
+        ))
 
     return results
 
@@ -113,7 +115,7 @@ def run_all():
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(
-        description="Scaled Experience Replay (larger buffer for larger models)"
+        description="Online INR with Aggressive Experience Replay"
     )
     parser.add_argument("--model", type=str, default=None,
                         choices=["base", "medium", "large"],

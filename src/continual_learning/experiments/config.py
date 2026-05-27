@@ -72,12 +72,6 @@ BATCH_SIZE = 512  # Used only for offline training reference
 # Strategy default hyperparameters
 # ---------------------------------------------------------------------------
 
-ER_DEFAULTS = {
-    "buffer_size": 10000,
-    "replay_weight": 0.5,
-    "replay_batch_size": 5000,
-}
-
 ER_SCALED_DEFAULTS = {
     "buffer_size": 50000,
     "replay_weight": 0.7,

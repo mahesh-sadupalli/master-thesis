@@ -1,9 +1,8 @@
 """
-Stage 4: Continual Learning -- Experience Replay.
+Online INR with Experience Replay (Scaled configuration).
 
-Maintains a fixed-size replay buffer using reservoir sampling for uniform
-temporal coverage. During training, replays stored samples alongside current
-window data (Rolnick et al., 2019).
+Trains the coordinate-based INR sequentially across 20 temporal windows
+with a replay buffer of 50,000 samples and replay weight 0.7.
 """
 
 import sys
@@ -22,7 +21,7 @@ from continual_learning.cl_strategies import ExperienceReplayStrategy
 from continual_learning.cl_training import train_online_cl, evaluate_full_dataset
 from continual_learning.experiments.config import (
     DATA_FILE, RESULTS_BASE, get_device, EPOCHS_PER_WINDOW, NUM_WINDOWS,
-    ER_DEFAULTS, OFFLINE_REFERENCE
+    ER_SCALED_DEFAULTS, OFFLINE_REFERENCE
 )
 
 MODELS = {
@@ -33,7 +32,7 @@ MODELS = {
 
 
 def run(model_name="base"):
-    """Run Experience Replay experiment for a single model size."""
+    """Run Scaled Experience Replay experiment for a single model size."""
     device = get_device()
     print(f"[Environment] Device: {device}")
 
@@ -42,30 +41,30 @@ def run(model_name="base"):
     print(f"[Data] Loaded {len(dataset.inputs)} samples")
 
     model = MODELS[model_name]().to(device)
-    strategy = ExperienceReplayStrategy(**ER_DEFAULTS)
-    output_dir = os.path.join(RESULTS_BASE, f"{model_name}_experience_replay")
+    strategy = ExperienceReplayStrategy(**ER_SCALED_DEFAULTS)
+    output_dir = os.path.join(RESULTS_BASE, f"{model_name}_er_scaled")
 
     # Train
     metrics = train_online_cl(
         model=model, dataset=dataset, device=device,
         epochs_per_window=EPOCHS_PER_WINDOW,
-        model_name=f"{model_name}_experience_replay",
+        model_name=f"{model_name}_er_scaled",
         output_dir=output_dir, strategy=strategy,
         num_windows=NUM_WINDOWS,
     )
 
     # Save per-window metrics
     df = pd.DataFrame(metrics)
-    df.to_csv(os.path.join(output_dir, f"{model_name}_experience_replay_metrics.csv"), index=False)
+    df.to_csv(os.path.join(output_dir, f"{model_name}_er_scaled_metrics.csv"), index=False)
 
     # Full dataset evaluation
     full_eval = evaluate_full_dataset(
-        model, dataset, device, model_name=f"{model_name}_experience_replay"
+        model, dataset, device, model_name=f"{model_name}_er_scaled"
     )
 
     # Save evaluation
     eval_data = {
-        "model": f"{model_name}_experience_replay",
+        "model": f"{model_name}_er_scaled",
         "training_mode": "online_streaming",
         "strategy": strategy.get_config(),
         "parameters": sum(p.numel() for p in model.parameters()),
@@ -91,14 +90,14 @@ def run(model_name="base"):
 
 
 def run_all():
-    """Run Experience Replay experiment across all model sizes."""
+    """Run Scaled Experience Replay experiment across all model sizes."""
     results = []
     for model_name in MODELS:
         result = run(model_name)
         results.append(result)
 
-    print(f"\n[Summary] Experience Replay (buffer={ER_DEFAULTS['buffer_size']}, "
-          f"weight={ER_DEFAULTS['replay_weight']})")
+    print(f"\n[Summary] Scaled Experience Replay (buffer={ER_SCALED_DEFAULTS['buffer_size']}, "
+          f"weight={ER_SCALED_DEFAULTS['replay_weight']})")
     print(f"{'Model':<10} {'Window PSNR':>12} {'Full PSNR':>10} {'Drop':>8} {'SSIM':>8} {'RE%':>8} {'Time':>8}")
     print("-" * 68)
     for r in results:
@@ -113,7 +112,7 @@ def run_all():
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(
-        description="Experience Replay with reservoir sampling"
+        description="Scaled Experience Replay (larger buffer for larger models)"
     )
     parser.add_argument("--model", type=str, default=None,
                         choices=["base", "medium", "large"],

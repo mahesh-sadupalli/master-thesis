@@ -1,8 +1,9 @@
 """
-Stage 3: Stateful Training -- Naive Sequential Baseline.
+Online INR with Naive Sequential Training (no replay).
 
-Trains each temporal window sequentially without any forgetting mitigation.
-This establishes the baseline forgetting behavior (Huyen, 2022).
+Trains the coordinate-based INR sequentially across 20 temporal windows
+with no forgetting mitigation. Establishes the lower-bound baseline
+against which the Experience Replay configurations are compared.
 """
 
 import sys
