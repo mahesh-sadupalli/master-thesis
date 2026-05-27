@@ -2,93 +2,128 @@
 
 **Master's Thesis** | BTU Cottbus-Senftenberg | Mahesh Sadupalli
 
-**[Interactive Demo](https://mahesh-sadupalli.github.io/master-thesis/)** -- Explore flow field reconstructions, IEEE 754 bit-level compression visualization, and model comparisons in the browser.
+**[Interactive Demo](https://mahesh-sadupalli.github.io/master-thesis/)** Explore flow field reconstructions, IEEE 754 bit-level compression visualization, and model comparisons in the browser.
 
 ## Abstract
 
 This thesis investigates the application of neural networks for concurrent and real-time data compression in streaming spatio-temporal datasets. As modern scientific simulations generate increasingly large data volumes due to higher resolutions and longer runtimes, traditional storage and post-processing approaches face significant I/O bottlenecks and scalability limitations. This work proposes an in-situ and in-transit compression framework that employs deep learning neural networks to learn compact representations of data during runtime.
 
-The core approach uses **Implicit Neural Representations (INR)** — coordinate-based MLPs that encode entire datasets into compact model weights. Evaluated across three model sizes in two training paradigms (offline batch vs online streaming), with continual learning strategies to mitigate catastrophic forgetting. Validated on a vortex shedding CFD dataset (7.9M samples, 300 timesteps):
+Three complementary compression approaches are developed and evaluated under both offline batch training and online streaming training, with continual learning strategies to mitigate catastrophic forgetting:
 
-- **Batch Learning (Offline)** -- Full-dataset training achieving up to 35.72 dB PSNR with compression ratios exceeding 27,000:1.
-- **Continual Learning (Naive Online)** -- Streaming training with temporal windows, revealing catastrophic forgetting as the central challenge (full-dataset PSNR drops to 13-17 dB).
-- **Continual Learning with Experience Replay** -- ER-Scaled and ER-Aggressive strategies that mitigate forgetting, improving online PSNR by +6.7-10.1 dB with minimal overhead.
+- **Implicit Neural Representations (INR):** coordinate-based MLPs that encode entire datasets into compact model weights.
+- **Linear Autoencoder (LAE):** fully-connected encoder/decoder operating on per-point temporal sequences.
+- **Convolutional Autoencoder (Conv2D AE):** 2D-grid based encoder/decoder operating on field snapshots after Delaunay interpolation onto a regular grid.
+
+The framework is validated on a vortex shedding CFD dataset (7.9M samples, 300 timesteps) chosen as a representative case study; the methodology itself is domain-agnostic and applies to any spatio-temporal field data.
 
 ## Approach
 
-The framework is domain-agnostic and applicable to any spatio-temporal field data (CFD, climate modelling, molecular dynamics, structural mechanics, etc.). It maps spatial coordinates and time to field variables using neural networks, replacing large discrete datasets with compact network parameters.
+The framework maps spatial coordinates and time to field variables using neural networks, replacing large discrete datasets with compact network parameters and (for autoencoders) per-sample latent codes.
 
-The validation dataset maps `(x, y, z, t) → (Vx, Vy, Pressure, TKE)` from a vortex shedding simulation with 7,919,100 spatio-temporal samples across 300 timesteps.
+The validation dataset maps `(x, y, z, t) -> (Vx, Vy, Pressure, TKE)` from a vortex shedding simulation with 7,919,100 spatio-temporal samples across 300 timesteps.
 
 ## Model Architectures
 
-Coordinate-based MLPs (Implicit Neural Representations):
+### Implicit Neural Representation (Coordinate-Based MLP)
 
 | Model | Architecture | Parameters | Size | Compression Ratio |
 |-------|-------------|------------|------|-------------------|
-| Base | 4 → 64 → 64 → 32 → 4 | 6,692 | 26.1 KB | 27,395:1 |
-| Medium | 4 → 96 → 96 → 48 → 4 | 14,644 | 57.2 KB | 13,241:1 |
-| Large | 4 → 128 → 128 → 64 → 4 | 25,668 | 100.3 KB | 7,713:1 |
+| Base | 4 -> 64 -> 64 -> 32 -> 4 | 6,692 | 29 KB | 4,733:1 |
+| Medium | 4 -> 96 -> 96 -> 48 -> 4 | 14,644 | 60 KB | 2,163:1 |
+| Large | 4 -> 128 -> 128 -> 64 -> 4 | 25,668 | 103 KB | 1,234:1 |
 
-All models use ReLU activations, MSE loss, and Adam optimizer (lr=0.001).
+### Linear Autoencoder (Offline)
 
-## Results
+| Model | Architecture | Latent Dim | Parameters | Compression Ratio |
+|-------|-------------|------------|------------|-------------------|
+| Base | 1200 -> 256 -> 128 -> 16 -> 128 -> 256 -> 1200 | 16 | 686,016 | 28.6:1 |
+| Medium | 1200 -> 512 -> 256 -> 128 -> 32 -> 128 -> 256 -> 512 -> 1200 | 32 | 1,567,696 | 13.1:1 |
+| Large | 1200 -> 512 -> 256 -> 128 -> 64 -> 128 -> 256 -> 512 -> 1200 | 64 | 1,575,920 | 9.7:1 |
 
-### Cross-Method Comparison
+### Convolutional Autoencoder (2D-grid)
 
-| Approach | Model | PSNR (dB) | SSIM | Rel. Error (%) | Compression | Training Time |
-|----------|-------|-----------|------|----------------|-------------|---------------|
-| **Batch Learning** | Base | 31.24 | 0.9748 | 4.90 | 27,395:1 | ~3.2 hrs |
-| | Medium | 34.18 | 0.9853 | 3.49 | 13,241:1 | ~3.2 hrs |
-| | Large | 35.72 | 0.9823 | 2.92 | 7,713:1 | ~3.2 hrs |
-| **Naive Online** | Base | 14.90 | 0.7996 | 32.07 | 27,395:1 | 42.7s |
-| | Medium | 13.38 | 0.7822 | 38.21 | 13,241:1 | 71.6s |
-| | Large | 13.18 | 0.7941 | 39.07 | 7,713:1 | 85.3s |
-| **ER Scaled** | Base | 21.47 | 0.8830 | 15.07 | 27,395:1 | 49.9s |
-| | Medium | 21.98 | 0.8782 | 14.22 | 13,241:1 | 77.4s |
-| | Large | 22.03 | 0.9034 | 14.14 | 7,713:1 | 90.7s |
-| **ER Aggressive** | Base | 21.60 | 0.8958 | 14.86 | 27,395:1 | 59.4s |
-| | Medium | 23.27 | 0.8961 | 12.26 | 13,241:1 | 88.2s |
-| | Large | 23.19 | 0.8931 | 12.37 | 7,713:1 | 101.3s |
+| Model | Encoder Channels | Latent Dim | Parameters | Compression Ratio |
+|-------|------------------|------------|------------|-------------------|
+| Base | 4 -> 16 -> 32 -> 64 -> 128 | 32 | 328,900 | 93.6:1 |
+| Medium | 4 -> 32 -> 64 -> 128 -> 256 | 64 | 1,307,012 | 23.9:1 |
+| Large | 4 -> 32 -> 64 -> 128 -> 256 | 128 | 1,831,364 | 16.9:1 |
 
-### Flow Field Reconstructions -- Batch Learning (Offline)
+All models are trained with the Adam optimiser (lr = 0.001) and MSE loss. INR uses ReLU activations on hidden layers; the linear autoencoder uses Leaky ReLU with dropout; the convolutional autoencoder uses Leaky ReLU with batch normalisation.
 
-| Base (31.24 dB) | Medium (34.18 dB) | Large (35.72 dB) |
-|:---:|:---:|:---:|
-| ![](results/batch_learning/base_model_offline/base_flow_visualization.png) | ![](results/batch_learning/medium_model_offline/medium_flow_visualization.png) | ![](results/batch_learning/large_model_offline/large_flow_visualization.png) |
+## Results (Full-Dataset PSNR in dB)
 
-### Flow Field Reconstructions -- Continual Learning (Naive Online)
+### Cross-Method Summary (best result per approach)
 
-Full-dataset evaluation reveals severe quality degradation due to catastrophic forgetting.
+| Approach | Best PSNR (dB) | Gap to Offline | Best CR |
+|----------|---------------|----------------|---------|
+| Batch INR (Offline) | 35.72 | reference | 4,733:1 |
+| Online INR + CL | 23.27 | -12.45 dB | 4,733:1 |
+| Linear AE (Offline) | 37.94 | reference | 28.6:1 |
+| Online LAE + CL | 34.80 | -3.14 dB | 9.7:1 |
+| Conv2D AE (Offline) | 32.75 | reference | 93.6:1 |
+| Online Conv2D + CL | 31.05 | -1.70 dB | 93.6:1 |
 
-| Base (14.90 dB) | Medium (13.38 dB) | Large (13.18 dB) |
-|:---:|:---:|:---:|
-| ![](results/continual_learning/base_model_online/base_online_visualization.png) | ![](results/continual_learning/medium_model_online/medium_online_visualization.png) | ![](results/continual_learning/large_model_online/large_online_visualization.png) |
+### INR: Offline vs Online (Full-Dataset)
 
-### Flow Field Reconstructions -- Experience Replay
+| Model | Offline | Naive | ER Scaled | ER Aggressive |
+|-------|---------|-------|-----------|---------------|
+| Base | 31.24 | 14.90 | 21.47 | 21.60 |
+| Medium | 34.18 | 13.38 | 21.98 | 23.27 |
+| Large | 35.72 | 13.18 | 22.03 | 23.19 |
 
-| Naive | ER Scaled | ER Aggressive |
-|:---:|:---:|:---:|
-| ![](results/cl_boosting/naive_flow_field.png) | ![](results/cl_boosting/er_scaled_flow_field.png) | ![](results/cl_boosting/er_aggressive_flow_field.png) |
+### Linear Autoencoder: Offline vs Online (Full-Dataset)
 
-| PSNR per Window | Gap to Offline |
-|:---:|:---:|
-| ![](results/cl_boosting/comparison_cl/cl_psnr_per_window.png) | ![](results/cl_boosting/comparison_cl/cl_gap_to_offline.png) |
+| Model | Offline | Naive | ER Scaled | ER Aggressive |
+|-------|---------|-------|-----------|---------------|
+| Base | 36.23 | 28.51 | 31.38 | 31.18 |
+| Medium | 37.90 | 31.16 | 34.45 | 34.46 |
+| Large | 37.94 | 30.79 | 34.11 | 34.80 |
+
+### Convolutional Autoencoder: Offline vs Online (Full-Dataset)
+
+| Model | Offline | Naive | ER Scaled | ER Aggressive |
+|-------|---------|-------|-----------|---------------|
+| Base | 30.67 | 18.53 | 29.18 | 29.32 |
+| Medium | 32.75 | 18.35 | 30.48 | 30.93 |
+| Large | 32.75 | 18.61 | 30.69 | 31.05 |
 
 ## Key Findings
 
-1. **Batch learning achieves excellent reconstruction** -- up to 35.72 dB PSNR and 0.982 SSIM with extreme compression ratios (27,395:1) but requires hours of training
-2. **Catastrophic forgetting is severe in naive online training** -- larger models forget more (counter-intuitive), with full-dataset PSNR dropping to 13-15 dB
-3. **Experience Replay effectively mitigates forgetting** -- ER-Aggressive improves online PSNR by +6.7-10.1 dB with only 14-40% computational overhead
-4. **Regularization methods (EWC, LwF) fail for INR compression** -- shared parameter spaces make task-specific protection impossible; LwF is actively harmful for large models
-5. **10-12 dB gap to offline remains** -- motivating future work with autoencoder architectures and larger replay buffers
+1. **All three approaches achieve high-quality offline reconstruction.** The linear autoencoder reaches the highest reconstruction quality (37.94 dB), the INR achieves the highest compression ratios (up to 4,733:1), and the convolutional autoencoder balances both (32.75 dB at 93.6:1).
+2. **Naive online training suffers severe catastrophic forgetting** for all architectures, with full-dataset PSNR dropping by 13 to 21 dB relative to offline.
+3. **Experience Replay substantially mitigates forgetting.** ER Aggressive recovers 6 to 12 dB for the INR, 3 to 4 dB for the linear autoencoder, and 11 to 12 dB for the convolutional autoencoder.
+4. **Autoencoders are more streaming-friendly than the INR.** The Conv2D AE with ER Aggressive closes the gap to within 1.70 dB of offline; the linear AE to within 3.14 dB; the INR retains an approximately 12 dB residual gap.
+5. **Larger INRs forget more severely** than smaller ones under naive online training, an inversion of the offline scaling trend, indicating that the failure mode is interference among shared parameters rather than insufficient capacity.
 
 ## Evaluation Metrics
 
-- **[PSNR](https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio) (Peak Signal-to-Noise Ratio):** Reconstruction quality in dB -- higher is better
-- **[SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure) (Structural Similarity Index):** Structural fidelity (0 to 1) -- higher is better
-- **Relative Error:** L2 norm error as a percentage of the target norm
-- **Compression Ratio:** Original data size divided by model parameter size
+- **[PSNR](https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio) (Peak Signal-to-Noise Ratio):** Reconstruction quality in dB; higher is better.
+- **[SSIM](https://en.wikipedia.org/wiki/Structural_similarity_index_measure) (Structural Similarity Index):** Structural fidelity in [0, 1]; higher is better.
+- **Relative Error:** L2 norm error as a percentage of the target norm.
+- **Compression Ratio:** Original data size divided by stored representation (model weights, plus latent codes for autoencoders).
+
+## Repository Structure
+
+```
+src/
+  unified_training_utils.py        INR dataset, models, metrics, offline training loop
+  autoencoder_utils.py             Linear autoencoder model and training utilities
+  online_training_utils.py         Online window-based training loop for the INR
+  train_{base,medium,large}_{offline,online}.py   INR training entry points
+  visualize_*.py                   Flow-field visualisation scripts
+  compare_{offline,online}.py      Cross-model comparison plots
+  regen_time_avg_multistation.py   Time-averaged wake-profile figure
+  continual_learning/
+    cl_strategies.py               Naive and Experience Replay strategies
+    cl_training.py                 Online CL training loop for the INR
+    replay_buffer.py               Reservoir-sampling replay buffer
+    ae_cl_training.py              Online CL training loop for the linear AE
+    ae_online_dataset.py           WindowedAEDataset for online AE training
+    experiments/                   Per-strategy experiment entry points
+notebooks/                         Kaggle-ready notebooks for all approaches
+results/                           Trained model checkpoints and metrics
+documents/                         Thesis LaTeX sources and PDF
+```
 
 ## Interactive Visualization
 
