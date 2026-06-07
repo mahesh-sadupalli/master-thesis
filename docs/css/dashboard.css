@@ -385,3 +385,17 @@ body {
   .glance-row { grid-template-columns: 1fr; }
   .metrics-row { grid-template-columns: 1fr; }
 }
+
+/* ── Action Button ────────────────────────────────────────────── */
+.action-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 7px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.action-btn:hover { opacity: 0.85; }

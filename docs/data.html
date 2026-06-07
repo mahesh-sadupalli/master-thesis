@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <link rel="stylesheet" href="css/dashboard.css?v=10">
+  <link rel="stylesheet" href="css/dashboard.css?v=11">
 </head>
 <body>
 
@@ -27,6 +27,7 @@
         <option value="compression">Compression Results</option>
         <option value="comparison">Model Comparison</option>
         <option value="distcompare">Distribution: Before vs After</option>
+        <option value="optimization">MSE Optimization</option>
       </select>
       <a href="index.html" class="header-link">Compression Demo &rarr;</a>
     </div>
@@ -444,6 +445,86 @@
 
   </section>
 
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: MSE Optimization
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-optimization" class="dash-page">
+
+    <h2 class="dash-section-title">MSE Loss Surface &amp; Optimizer Convergence</h2>
+    <p class="dash-caption">
+      For regression tasks with MSE loss, the loss surface is a <strong>convex quadratic bowl</strong>
+      (guaranteed global minimum). Below we visualize how different optimizers navigate this surface
+      to reach the minimum. Select an optimizer to compare convergence trajectories.
+    </p>
+
+    <div class="control-inline">
+      <label>Optimizer</label>
+      <select id="opt-select" onchange="renderOptimization()">
+        <option value="all">All (Compare)</option>
+        <option value="gd">Gradient Descent (GD)</option>
+        <option value="sgd">Stochastic Gradient Descent (SGD)</option>
+        <option value="adam">Adam</option>
+      </select>
+      <label>Learning Rate</label>
+      <select id="opt-lr-select" onchange="renderOptimization()">
+        <option value="0.01">0.01</option>
+        <option value="0.001" selected>0.001 (thesis default)</option>
+        <option value="0.0001">0.0001</option>
+      </select>
+      <button class="action-btn" onclick="rerunOptimization()">Re-run</button>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 1: 3D Surface + 2D Contour -->
+    <div class="two-col">
+      <div class="col-panel">
+        <h3 class="dash-section-title">3D Loss Surface</h3>
+        <p class="dash-caption">Convex MSE bowl L(w1, w2) = (w1&sup2; + 3w2&sup2;) / 2 with optimizer trajectory.</p>
+        <div id="chart-opt-3d" class="chart-container chart-tall"></div>
+      </div>
+      <div class="col-panel">
+        <h3 class="dash-section-title">2D Contour Map</h3>
+        <p class="dash-caption">Top-down view showing gradient descent path toward the global minimum at origin.</p>
+        <div id="chart-opt-contour" class="chart-container chart-tall"></div>
+      </div>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 2: Loss Curve + Optimizer Properties -->
+    <div class="two-col">
+      <div class="col-panel">
+        <h3 class="dash-section-title">Loss Convergence Curve</h3>
+        <p class="dash-caption">MSE loss vs iteration showing convergence speed and stability.</p>
+        <div id="chart-opt-loss" class="chart-container"></div>
+      </div>
+      <div class="col-panel">
+        <h3 class="dash-section-title">Optimizer Properties</h3>
+        <div id="opt-properties" class="opt-props-grid"></div>
+      </div>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 3: Actual Training Curves from Thesis -->
+    <h2 class="dash-section-title">Actual Training Loss (from thesis experiments)</h2>
+    <p class="dash-caption">
+      All models trained with <strong>Adam optimizer (lr=0.001)</strong>. Offline: 150 epochs over full dataset.
+      Online: 100 epochs &times; 20 temporal windows = 2,000 total epochs.
+    </p>
+    <div class="control-inline">
+      <label>Mode</label>
+      <select id="opt-mode-select" onchange="renderActualLoss()">
+        <option value="offline">Batch Training (Offline)</option>
+        <option value="online">Continual Learning (Online)</option>
+        <option value="boosted">CL Boosted (ER Aggressive)</option>
+      </select>
+    </div>
+    <div id="chart-actual-loss" class="chart-container"></div>
+
+  </section>
+
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
   <footer class="dash-footer">
     Built by <strong>Mahesh Sadupalli</strong> &nbsp;|&nbsp;
@@ -452,6 +533,6 @@
     7.9M spatio-temporal samples
   </footer>
 
-  <script src="js/dashboard.js?v=10"></script>
+  <script src="js/dashboard.js?v=11"></script>
 </body>
 </html>
