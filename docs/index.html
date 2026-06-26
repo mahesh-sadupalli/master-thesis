@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neural Network Compression of Spatio-Temporal Data</title>
-  <meta name="description" content="Interactive visualization of coordinate-based neural networks compressing streaming CFD simulation data. Compare offline and online training with IEEE 754 bit-level inspection.">
-  <meta property="og:title" content="Neural Network Compression of Spatio-Temporal Data">
-  <meta property="og:description" content="Interactive neural compression visualization — PSNR up to 35.72 dB with 4,733:1 compression ratio.">
+  <title>Concurrent Neural Network Training for Compression of Spatio-Temporal Data</title>
+  <meta name="description" content="Interactive visualization of neural network-based concurrent compression of streaming spatio-temporal data. Compare offline batch and online continual learning approaches with IEEE 754 bit-level inspection.">
+  <meta property="og:title" content="Concurrent Neural Network Training for Compression of Spatio-Temporal Data">
+  <meta property="og:description" content="Interactive demo — neural compression of streaming spatio-temporal data. PSNR up to 35.72 dB with 4,733:1 compression ratio.">
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,7 @@
   <!-- ── Header ──────────────────────────────────────────────────────── -->
   <header id="page-header">
     <div class="header-content">
-      <h1>Neural Compression Demo</h1>
+      <h1>Concurrent Neural Network Training for Compression of Spatio-Temporal Data</h1>
     </div>
     <div class="header-right">
       <a href="data.html" class="header-nav-link">Data Dashboard &rarr;</a>
@@ -35,9 +35,9 @@
   <!-- ── Intro Line ─────────────────────────────────────────────────── -->
   <section class="page-intro">
     <p>
-      Interactive visualization of <strong>coordinate-based neural networks</strong> compressing
-      streaming spatio-temporal simulation data. Compare <strong>offline batch</strong> vs
-      <strong>online continual learning</strong> approaches across three model sizes.
+      Interactive visualization of <strong>neural network-based concurrent compression</strong> of
+      streaming spatio-temporal point-cloud data. Compare <strong>offline batch</strong> vs
+      <strong>online continual learning</strong> approaches across three model sizes and architectures.
       <span class="intro-meta">Mahesh Sadupalli &middot; BTU Cottbus-Senftenberg &middot; M.Sc. Artificial Intelligence</span>
     </p>
   </section>
@@ -47,7 +47,13 @@
   <section id="description" class="collapsed">
     <div class="abstract-inner">
       <p>
-        This work investigates coordinate-based neural networks for concurrent, real-time compression of streaming scientific simulation data. Multi-layer perceptrons learn continuous mappings from spatial coordinates and time directly to field variables, compressing megabytes of raw simulation output into kilobytes of network weights. The framework is evaluated under two training paradigms: offline batch training on complete datasets achieving PSNR up to 35.72&nbsp;dB, and online incremental training with temporal windows that simulates real-time in-situ compression. To combat catastrophic forgetting in the streaming setting, continual learning strategies including Experience Replay are investigated. The approach is validated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps (30 representative timesteps visualized here).
+        This master&rsquo;s thesis investigates the application of neural networks for concurrent and real-time data compression of streaming spatio-temporal point-cloud data. As modern simulations generate increasingly large data volumes due to higher resolutions and longer run-times, traditional storage and post-processing approaches face significant I/O bottlenecks and scalability limitations. This work proposes a hybrid in-situ/in-transit compression framework that employs neural networks to learn compact representations of data during runtime.
+      </p>
+      <p>
+        The input data consists of unstructured point-cloud coordinates with associated numeric field values, making the framework applicable to any domain that produces spatio-temporal numeric or streaming data. The methodology employs multiple neural network architectures: coordinate-based MLPs that map spatial coordinates and time directly to field variables, and Autoencoder-based models that learn compressed latent representations. Both are evaluated under two training paradigms: offline batch training on the complete dataset, and online incremental training that simulates real-time in-situ compression.
+      </p>
+      <p>
+        Online streaming training suffers from catastrophic forgetting, where the model progressively loses the ability to reconstruct earlier timesteps. To address this, the thesis investigates continual learning strategies based on Experience Replay (ER), evaluated in two configurations: ER Scaled (moderate replay buffer at reduced weight) and ER Aggressive (larger buffer at full replay weight). The framework is evaluated on a vortex shedding CFD dataset comprising approximately 7.9&nbsp;million spatio-temporal samples across 300&nbsp;timesteps (30 representative timesteps visualized here).
       </p>
       <div class="formula-note">
         <div class="formula-line">
