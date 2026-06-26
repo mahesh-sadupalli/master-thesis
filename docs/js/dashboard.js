@@ -88,6 +88,7 @@
       case 'comparison': renderComparisonPage(); break;
       case 'distcompare': renderDistComparePage(); break;
       case 'optimization': renderOptimizationPage(); break;
+      case 'activations': renderActivationsPage(); break;
     }
   }
 
@@ -1558,6 +1559,178 @@
       yaxis: { title: 'MSE Loss', type: 'log' },
       legend: { orientation: 'h', y: -0.15 },
     }), { responsive: true, displayModeBar: false });
+  };
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ACTIVATION FUNCTIONS PAGE
+  // ══════════════════════════════════════════════════════════════════════
+
+  var ACT_COLORS = { relu: '#E74C3C', leaky: '#2874A6', sin: '#27AE60' };
+
+  function renderActivationsPage() {
+    renderActivations();
+    renderDeadNeuronChart();
+    renderSignalPropagation();
+  }
+
+  function linspace(a, b, n) {
+    var arr = [];
+    var step = (b - a) / (n - 1);
+    for (var i = 0; i < n; i++) arr.push(a + step * i);
+    return arr;
+  }
+
+  function relu(x) { return Math.max(0, x); }
+  function reluGrad(x) { return x > 0 ? 1 : 0; }
+  function leakyRelu(x, alpha) { return x >= 0 ? x : alpha * x; }
+  function leakyReluGrad(x, alpha) { return x >= 0 ? 1 : alpha; }
+  function sinAct(x, omega) { return Math.sin(omega * x); }
+  function sinActGrad(x, omega) { return omega * Math.cos(omega * x); }
+
+  window.renderActivations = function () {
+    var alpha = parseFloat(document.getElementById('act-alpha').value);
+    var omega = parseFloat(document.getElementById('act-omega').value);
+    var xs = linspace(-3, 3, 600);
+
+    var forwardTraces = [
+      { x: xs, y: xs.map(relu), name: 'ReLU', line: { color: ACT_COLORS.relu, width: 2.5 } },
+      { x: xs, y: xs.map(function (x) { return leakyRelu(x, alpha); }), name: 'Leaky ReLU (α=' + alpha + ')', line: { color: ACT_COLORS.leaky, width: 2.5 } },
+      { x: xs, y: xs.map(function (x) { return sinAct(x, omega); }), name: 'Sin (ω=' + omega + ')', line: { color: ACT_COLORS.sin, width: 2.5 } },
+    ];
+
+    var gradTraces = [
+      { x: xs, y: xs.map(reluGrad), name: "ReLU'", line: { color: ACT_COLORS.relu, width: 2.5 } },
+      { x: xs, y: xs.map(function (x) { return leakyReluGrad(x, alpha); }), name: "Leaky ReLU'", line: { color: ACT_COLORS.leaky, width: 2.5 } },
+      { x: xs, y: xs.map(function (x) { return sinActGrad(x, omega); }), name: "Sin'", line: { color: ACT_COLORS.sin, width: 2.5 } },
+    ];
+
+    var fwdLayout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 450,
+      xaxis: { title: 'x (pre-activation)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+      yaxis: { title: 'f(x)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+      legend: { orientation: 'h', y: -0.15 },
+      shapes: [{ type: 'line', x0: -3, x1: 3, y0: 0, y1: 0, line: { color: '#ddd', width: 1 } }],
+    });
+
+    var gradLayout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 450,
+      xaxis: { title: 'x (pre-activation)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+      yaxis: { title: "f'(x)", zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+      legend: { orientation: 'h', y: -0.15 },
+      shapes: [{ type: 'line', x0: -3, x1: 3, y0: 0, y1: 0, line: { color: '#ddd', width: 1 } }],
+    });
+
+    Plotly.react('chart-act-forward', forwardTraces, fwdLayout, { responsive: true, displayModeBar: false });
+    Plotly.react('chart-act-gradient', gradTraces, gradLayout, { responsive: true, displayModeBar: false });
+  };
+
+  function renderDeadNeuronChart() {
+    var alpha = parseFloat(document.getElementById('act-alpha').value);
+    var xs = linspace(-3, 3, 600);
+
+    var traces = [
+      {
+        x: xs, y: xs.map(function (x) { return Math.abs(reluGrad(x)); }),
+        name: 'ReLU |gradient|', fill: 'tozeroy',
+        line: { color: ACT_COLORS.relu, width: 2 },
+        fillcolor: 'rgba(231,76,60,0.15)',
+      },
+      {
+        x: xs, y: xs.map(function (x) { return Math.abs(leakyReluGrad(x, alpha)); }),
+        name: 'Leaky ReLU |gradient|', fill: 'tozeroy',
+        line: { color: ACT_COLORS.leaky, width: 2 },
+        fillcolor: 'rgba(40,116,166,0.15)',
+      },
+    ];
+
+    // Add annotation for dead zone
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 380,
+      xaxis: { title: 'Pre-activation value (x)' },
+      yaxis: { title: '|Gradient|', range: [-0.05, 1.15] },
+      legend: { orientation: 'h', y: -0.15 },
+      annotations: [{
+        x: -1.5, y: 0.05, text: 'Dead zone<br>(ReLU gradient = 0)',
+        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
+        font: { size: 12, color: ACT_COLORS.relu },
+      }, {
+        x: -1.5, y: alpha + 0.05, text: 'Leaky ReLU: gradient = α',
+        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
+        font: { size: 12, color: ACT_COLORS.leaky },
+      }],
+    });
+
+    Plotly.react('chart-act-dead', traces, layout, { responsive: true, displayModeBar: false });
+  }
+
+  window.renderSignalPropagation = function () {
+    var nLayers = parseInt(document.getElementById('act-layers').value);
+    var alpha = parseFloat(document.getElementById('act-alpha').value);
+    var omega = parseFloat(document.getElementById('act-omega').value);
+    var n = 300;
+    var xs = linspace(-2, 2, n);
+
+    // Deterministic "random" weights using a simple seed pattern
+    function pseudoWeight(layer, i) {
+      var v = Math.sin((layer + 1) * 127.1 + i * 311.7) * 43758.5453;
+      return (v - Math.floor(v)) * 2 - 1;
+    }
+    function pseudoBias(layer) {
+      var v = Math.sin((layer + 1) * 269.5) * 43758.5453;
+      return ((v - Math.floor(v)) * 2 - 1) * 0.3;
+    }
+
+    function propagate(xs, actFn) {
+      var signal = xs.slice();
+      var results = [signal.slice()];
+      for (var l = 0; l < nLayers; l++) {
+        var w = pseudoWeight(l, 0) * 1.5;
+        var b = pseudoBias(l);
+        signal = signal.map(function (x) { return actFn(w * x + b); });
+        results.push(signal.slice());
+      }
+      return results;
+    }
+
+    var reluSignals = propagate(xs, relu);
+    var leakySignals = propagate(xs, function (x) { return leakyRelu(x, alpha); });
+    var sinSignals = propagate(xs, function (x) { return sinAct(x, omega); });
+
+    var traces = [];
+    var opacities = [];
+    for (var l = 0; l <= nLayers; l++) {
+      opacities.push(l === 0 ? 0.3 : (0.3 + 0.7 * l / nLayers));
+    }
+
+    // Input signal (shared)
+    traces.push({
+      x: xs, y: reluSignals[0], name: 'Input',
+      line: { color: '#888', width: 1.5, dash: 'dot' },
+      legendgroup: 'input', showlegend: true,
+    });
+
+    // Final layer for each activation
+    traces.push({
+      x: xs, y: reluSignals[nLayers], name: 'ReLU (layer ' + nLayers + ')',
+      line: { color: ACT_COLORS.relu, width: 2.5 },
+    });
+    traces.push({
+      x: xs, y: leakySignals[nLayers], name: 'Leaky ReLU (layer ' + nLayers + ')',
+      line: { color: ACT_COLORS.leaky, width: 2.5 },
+    });
+    traces.push({
+      x: xs, y: sinSignals[nLayers], name: 'Sin (layer ' + nLayers + ')',
+      line: { color: ACT_COLORS.sin, width: 2.5 },
+    });
+
+    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+      height: 450,
+      xaxis: { title: 'Input x' },
+      yaxis: { title: 'Output after ' + nLayers + ' layer(s)' },
+      legend: { orientation: 'h', y: -0.15 },
+    });
+
+    Plotly.react('chart-act-signal', traces, layout, { responsive: true, displayModeBar: false });
   };
 
   // ── Bootstrap ─────────────────────────────────────────────────────

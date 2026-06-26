@@ -28,6 +28,7 @@
         <option value="comparison">Model Comparison</option>
         <option value="distcompare">Distribution: Before vs After</option>
         <option value="optimization">MSE Optimization</option>
+        <option value="activations">Activation Functions</option>
       </select>
       <a href="index.html" class="header-link">Compression Demo &rarr;</a>
     </div>
@@ -525,12 +526,142 @@
 
   </section>
 
+  <!-- ══════════════════════════════════════════════════════════════════
+       PAGE: Activation Functions
+       ══════════════════════════════════════════════════════════════════ -->
+  <section id="page-activations" class="dash-page">
+
+    <h2 class="dash-section-title">Activation Functions</h2>
+    <p class="dash-caption">
+      Nonlinear activation functions introduce the representational power that lets neural networks
+      approximate arbitrary mappings. Below we compare the three activations relevant to this thesis:
+      <strong>ReLU</strong> (INR, Linear AE), <strong>Leaky ReLU</strong> (Conv2D AE),
+      and <strong>Sinusoidal</strong> (SIREN-style periodic activations from the INR literature).
+    </p>
+
+    <div class="control-inline">
+      <label>Leaky ReLU &alpha;</label>
+      <select id="act-alpha" onchange="renderActivations()">
+        <option value="0.01">0.01 (standard)</option>
+        <option value="0.1" selected>0.1 (thesis Conv2D AE)</option>
+        <option value="0.2">0.2</option>
+        <option value="0.3">0.3</option>
+      </select>
+      <label>Sin frequency &omega;</label>
+      <select id="act-omega" onchange="renderActivations()">
+        <option value="1">1</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="30" selected>30 (SIREN default)</option>
+      </select>
+    </div>
+
+    <!-- Row 1: Function + Derivative -->
+    <div class="two-col">
+      <div class="col-panel">
+        <h3 class="dash-section-title">f(x) &mdash; Forward Pass</h3>
+        <p class="dash-caption">How each activation transforms its input. The nonlinearity is what gives depth its power.</p>
+        <div id="chart-act-forward" class="chart-container chart-tall"></div>
+      </div>
+      <div class="col-panel">
+        <h3 class="dash-section-title">f&prime;(x) &mdash; Gradient (Backward Pass)</h3>
+        <p class="dash-caption">The derivative flows backward through the network during training. Dead zones (f&prime;=0) block learning.</p>
+        <div id="chart-act-gradient" class="chart-container chart-tall"></div>
+      </div>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 2: Properties comparison -->
+    <h2 class="dash-section-title">Properties Comparison</h2>
+    <div class="table-wrap">
+      <table class="dash-table" id="act-props-table">
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>ReLU</th>
+            <th>Leaky ReLU (&alpha;)</th>
+            <th>Sin (&omega;x)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="var-name">Definition</td>
+            <td>max(0, x)</td>
+            <td>max(&alpha;x, x)</td>
+            <td>sin(&omega;x)</td>
+          </tr>
+          <tr>
+            <td class="var-name">Derivative</td>
+            <td>0 if x&lt;0, 1 if x&gt;0</td>
+            <td>&alpha; if x&lt;0, 1 if x&gt;0</td>
+            <td>&omega; cos(&omega;x)</td>
+          </tr>
+          <tr>
+            <td class="var-name">Range</td>
+            <td>[0, &infin;)</td>
+            <td>(&minus;&infin;, &infin;)</td>
+            <td>[&minus;1, 1]</td>
+          </tr>
+          <tr>
+            <td class="var-name">Dead neuron risk</td>
+            <td>Yes &mdash; x&lt;0 kills gradient</td>
+            <td>No &mdash; small gradient survives</td>
+            <td>No &mdash; gradient oscillates</td>
+          </tr>
+          <tr>
+            <td class="var-name">Periodicity</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Yes &mdash; captures frequency content</td>
+          </tr>
+          <tr>
+            <td class="var-name">Used in thesis</td>
+            <td class="approach-cell">INR (all layers), Linear AE</td>
+            <td class="approach-cell">Conv2D AE (hidden layers)</td>
+            <td class="approach-cell">Literature: SIREN (Sitzmann et al., 2020)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 3: Dead neuron demonstration -->
+    <h2 class="dash-section-title">Dead Neuron Problem</h2>
+    <p class="dash-caption">
+      With ReLU, any neuron whose pre-activation is consistently negative produces zero output and zero gradient &mdash;
+      it is permanently &ldquo;dead&rdquo; and stops learning. Leaky ReLU fixes this by allowing a small gradient (&alpha;)
+      to flow through the negative region. The plots below show the gradient magnitude across the input range.
+    </p>
+    <div id="chart-act-dead" class="chart-container"></div>
+
+    <hr class="dash-divider">
+
+    <!-- Row 4: Signal propagation -->
+    <h2 class="dash-section-title">Signal Propagation Through Layers</h2>
+    <p class="dash-caption">
+      How a random input signal transforms as it passes through successive layers with each activation.
+      ReLU zeroes out negative values (sparsifying), Leaky ReLU preserves shape, Sin introduces periodic structure.
+    </p>
+    <div class="control-inline">
+      <label>Layers</label>
+      <select id="act-layers" onchange="renderSignalPropagation()">
+        <option value="1">1 layer</option>
+        <option value="2">2 layers</option>
+        <option value="3" selected>3 layers</option>
+        <option value="5">5 layers</option>
+      </select>
+    </div>
+    <div id="chart-act-signal" class="chart-container chart-tall"></div>
+
+  </section>
+
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
   <footer class="dash-footer">
-    Built by <strong>Mahesh Sadupalli</strong> &nbsp;|&nbsp;
+    <strong>Mahesh Sadupalli</strong> &nbsp;|&nbsp;
     Master Thesis &mdash; BTU Cottbus-Senftenberg &nbsp;|&nbsp;
-    M.Sc. Artificial Intelligence &nbsp;|&nbsp;
-    7.9M spatio-temporal samples
+    M.Sc. Artificial Intelligence
   </footer>
 
   <script src="js/dashboard.js?v=11"></script>
