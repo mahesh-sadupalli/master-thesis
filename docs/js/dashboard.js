@@ -1254,7 +1254,7 @@
   function offlineLoss(w1, w2) { return 0.5 * (w1 * w1 + 5 * w2 * w2); }
   function offlineGrad(w1, w2) { return [w1, 5 * w2]; }
 
-  var WINDOW_MINS = [[2.0, 1.5], [0.5, -1.0], [-1.5, 0.8], [-0.5, -0.5]];
+  var WINDOW_MINS = [[0.7, 0.5], [0.2, -0.4], [-0.5, 0.3], [-0.2, -0.2]];
 
   function windowLoss(w1, w2, cx, cy) {
     var d1 = w1 - cx, d2 = w2 - cy;
@@ -1291,7 +1291,7 @@
   function simSGD(lr, steps, lossFn, gradFn, w0) {
     var w = w0.slice(), path = [w.slice()], losses = [lossFn(w[0], w[1])];
     for (var i = 0; i < steps; i++) {
-      var eta = lr / (1 + 0.02 * i);
+      var eta = lr / (1 + 3 * i / steps);
       var g = gradFn(w[0], w[1]);
       var noise = 0.4 * Math.max(0.2, 1 - i / steps);
       var n1 = (Math.sin(i * 7.3 + 1.7) * 0.5 + Math.sin(i * 13.1) * 0.3) * noise;
@@ -1318,7 +1318,7 @@
   }
 
   function simOnlineNaive(optKey, lr, stepsPerWindow) {
-    var w = [3.0, 2.5], fullPath = [w.slice()], windowPaths = [];
+    var w = [1.0, 0.8], fullPath = [w.slice()], windowPaths = [];
     for (var wi = 0; wi < WINDOW_MINS.length; wi++) {
       var cx = WINDOW_MINS[wi][0], cy = WINDOW_MINS[wi][1];
       var lf = function (w1, w2) { return windowLoss(w1, w2, cx, cy); };
@@ -1340,7 +1340,7 @@
   // ── Render contour surface (static background) ─────────────────────
 
   function buildContourSurface(scenario) {
-    var range = 4.5, contN = 80;
+    var range = 2.0, contN = 80;
     var contX = linspace(-range, range, contN);
     var contY = linspace(-range, range, contN);
     var lossFn;
@@ -1512,7 +1512,7 @@
       for (var wi = 1; wi < WINDOW_MINS.length; wi++) {
         tracesLoss.push({
           type: 'scatter', mode: 'lines',
-          x: [wi * 41, wi * 41], y: [0.001, 30],
+          x: [wi * (a.stepsPerWindow + 1), wi * (a.stepsPerWindow + 1)], y: [0.001, 30],
           line: { color: WINDOW_COLORS[wi], width: 1, dash: 'dot' },
           name: wi === 1 ? 'Window boundary' : undefined,
           showlegend: wi === 1, legendgroup: 'wbound',
@@ -1539,15 +1539,18 @@
     } else {
       if (optAnim.step >= optAnim.totalSteps) optAnim.step = 0;
       var speed = parseInt(document.getElementById('opt-speed').value);
+      var skip = Math.max(1, Math.floor(optAnim.totalSteps / 300));
       btn.innerHTML = '&#9646;&#9646; Pause';
       optAnim.timer = setInterval(function () {
         if (optAnim.step >= optAnim.totalSteps) {
+          optAnim.step = optAnim.totalSteps;
+          drawOptFrame(optAnim.step);
           clearInterval(optAnim.timer);
           optAnim.timer = null;
           btn.innerHTML = '&#9654; Play';
           return;
         }
-        optAnim.step++;
+        optAnim.step = Math.min(optAnim.step + skip, optAnim.totalSteps);
         drawOptFrame(optAnim.step);
       }, speed);
     }
@@ -1575,9 +1578,9 @@
     var scenario = document.getElementById('opt-scenario').value;
     var optKey = document.getElementById('opt-select').value;
     var lr = parseFloat(document.getElementById('opt-lr-select').value);
-    var steps = 150;
-    var stepsPerWindow = 40;
-    var w0 = [3.0, 2.5];
+    var steps = Math.min(3000, Math.round(1.5 / lr));
+    var stepsPerWindow = Math.max(25, Math.round(steps / 4));
+    var w0 = [1.0, 0.8];
 
     // Scenario info
     var infoDiv = document.getElementById('opt-scenario-info');
@@ -1621,6 +1624,7 @@
     optAnim.show = show;
     optAnim.scenario = scenario;
     optAnim.totalSteps = maxLen - 1;
+    optAnim.stepsPerWindow = stepsPerWindow;
     optAnim.step = 0;
 
     // Update slider max
