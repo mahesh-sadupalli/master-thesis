@@ -27,8 +27,7 @@
         <option value="compression">Compression Results</option>
         <option value="comparison">Model Comparison</option>
         <option value="distcompare">Distribution: Before vs After</option>
-        <option value="optimization">MSE Optimization</option>
-        <option value="activations">Activation Functions</option>
+        <option value="training">Training &amp; Optimization</option>
       </select>
       <a href="https://github.com/mahesh-sadupalli/master-thesis" class="header-link" target="_blank" rel="noopener" style="background:none;color:var(--accent);border:1px solid var(--border);">
         <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>GitHub
@@ -450,96 +449,94 @@
   </section>
 
   <!-- ══════════════════════════════════════════════════════════════════
-       PAGE: MSE Optimization
+       PAGE: Training & Optimization
        ══════════════════════════════════════════════════════════════════ -->
-  <section id="page-optimization" class="dash-page">
+  <section id="page-training" class="dash-page">
 
-    <h2 class="dash-section-title">MSE Loss Surface &amp; Optimizer Convergence</h2>
+    <!-- ── Part 1: Optimizer Convergence ────────────────────────────── -->
+    <h2 class="dash-section-title">Optimizer Convergence on the MSE Loss Surface</h2>
     <p class="dash-caption">
-      For regression tasks with MSE loss, the loss surface is a <strong>convex quadratic bowl</strong>
-      (guaranteed global minimum). Below we visualize how different optimizers navigate this surface
-      to reach the minimum. Select an optimizer to compare convergence trajectories.
+      All thesis models minimise MSE loss with <strong>Adam (lr=0.001)</strong>.
+      In <strong>offline</strong> mode the full dataset defines a single convex bowl &mdash; Adam converges to the global minimum.
+      In <strong>online</strong> mode each temporal window shifts the loss surface; without replay the optimizer
+      chases each window&rsquo;s minimum and overwrites previous knowledge (catastrophic forgetting).
+      <strong>Experience Replay</strong> stabilises the effective surface so the optimizer finds a compromise minimum.
     </p>
 
     <div class="control-inline">
+      <label>Scenario</label>
+      <select id="opt-scenario" onchange="renderTrainingOpt()">
+        <option value="offline" selected>MLP Offline (Batch)</option>
+        <option value="online">MLP Online (Naive)</option>
+        <option value="online_er">MLP Online + ER Aggressive</option>
+      </select>
       <label>Optimizer</label>
-      <select id="opt-select" onchange="renderOptimization()">
-        <option value="all">All (Compare)</option>
-        <option value="gd">Gradient Descent (GD)</option>
-        <option value="sgd">Stochastic Gradient Descent (SGD)</option>
-        <option value="adam">Adam</option>
+      <select id="opt-select" onchange="renderTrainingOpt()">
+        <option value="adam" selected>Adam (thesis default)</option>
+        <option value="gd">Gradient Descent</option>
+        <option value="sgd">SGD</option>
+        <option value="all">All (compare)</option>
       </select>
       <label>Learning Rate</label>
-      <select id="opt-lr-select" onchange="renderOptimization()">
-        <option value="0.01">0.01</option>
-        <option value="0.001" selected>0.001 (thesis default)</option>
-        <option value="0.0001">0.0001</option>
+      <select id="opt-lr-select" onchange="renderTrainingOpt()">
+        <option value="0.5">0.5 (fast)</option>
+        <option value="0.1" selected>0.1 (default)</option>
+        <option value="0.01">0.01 (slow)</option>
       </select>
-      <button class="action-btn" onclick="rerunOptimization()">Re-run</button>
     </div>
 
-    <hr class="dash-divider">
+    <div id="opt-scenario-info" class="info-box" style="margin-bottom:16px;"></div>
 
-    <!-- Row 1: 3D Surface + 2D Contour -->
+    <!-- Playback controls -->
+    <div class="control-inline" style="gap:12px; align-items:center;">
+      <button id="opt-play-btn" onclick="toggleOptPlay()" style="padding:6px 18px; font-size:0.95rem; cursor:pointer; border:1px solid var(--border); border-radius:6px; background:var(--accent); color:#fff;">&#9654; Play</button>
+      <button onclick="resetOptAnim()" style="padding:6px 14px; font-size:0.95rem; cursor:pointer; border:1px solid var(--border); border-radius:6px; background:#f8f9fc;">Reset</button>
+      <input type="range" id="opt-step-slider" min="0" max="300" value="0" step="1" oninput="seekOptStep(+this.value)" style="flex:1; max-width:300px;">
+      <span id="opt-step-label" style="font-family:var(--font-mono); font-size:0.85rem; color:var(--text-dim); min-width:100px;">Step 0 / 300</span>
+      <label>Speed</label>
+      <select id="opt-speed" style="padding:4px 8px; border:1px solid var(--border); border-radius:4px;">
+        <option value="100">Slow</option>
+        <option value="40" selected>Normal</option>
+        <option value="10">Fast</option>
+      </select>
+    </div>
+
+    <!-- Row 1: 2D Contour + 3D Surface -->
     <div class="two-col">
       <div class="col-panel">
-        <h3 class="dash-section-title">3D Loss Surface</h3>
-        <p class="dash-caption">Convex MSE bowl L(w1, w2) = (w1&sup2; + 3w2&sup2;) / 2 with optimizer trajectory.</p>
-        <div id="chart-opt-3d" class="chart-container chart-tall"></div>
-      </div>
-      <div class="col-panel">
-        <h3 class="dash-section-title">2D Contour Map</h3>
-        <p class="dash-caption">Top-down view showing gradient descent path toward the global minimum at origin.</p>
+        <h3 class="dash-section-title">2D Contour &mdash; Optimizer Trajectory</h3>
+        <p class="dash-caption">Contour lines of constant loss. Watch the optimizer steps toward the minimum.</p>
         <div id="chart-opt-contour" class="chart-container chart-tall"></div>
       </div>
+      <div class="col-panel">
+        <h3 class="dash-section-title">3D Loss Surface</h3>
+        <p class="dash-caption">Interactive 3D view &mdash; drag to rotate, scroll to zoom.</p>
+        <div id="chart-opt-3d" class="chart-container chart-tall"></div>
+      </div>
     </div>
 
     <hr class="dash-divider">
 
-    <!-- Row 2: Loss Curve + Optimizer Properties -->
+    <!-- Row 2: Loss Curve + Properties -->
     <div class="two-col">
       <div class="col-panel">
-        <h3 class="dash-section-title">Loss Convergence Curve</h3>
-        <p class="dash-caption">MSE loss vs iteration showing convergence speed and stability.</p>
+        <h3 class="dash-section-title">Loss Convergence</h3>
+        <p class="dash-caption">MSE loss vs iteration (log scale). Drag to zoom, double-click to reset.</p>
         <div id="chart-opt-loss" class="chart-container"></div>
       </div>
       <div class="col-panel">
-        <h3 class="dash-section-title">Optimizer Properties</h3>
+        <h3 class="dash-section-title">Optimizer Update Rules</h3>
         <div id="opt-properties" class="opt-props-grid"></div>
       </div>
     </div>
 
     <hr class="dash-divider">
 
-    <!-- Row 3: Actual Training Curves from Thesis -->
-    <h2 class="dash-section-title">Actual Training Loss (from thesis experiments)</h2>
-    <p class="dash-caption">
-      All models trained with <strong>Adam optimizer (lr=0.001)</strong>. Offline: 150 epochs over full dataset.
-      Online: 100 epochs &times; 20 temporal windows = 2,000 total epochs.
-    </p>
-    <div class="control-inline">
-      <label>Mode</label>
-      <select id="opt-mode-select" onchange="renderActualLoss()">
-        <option value="offline">Batch Training (Offline)</option>
-        <option value="online">Continual Learning (Online)</option>
-        <option value="boosted">CL Boosted (ER Aggressive)</option>
-      </select>
-    </div>
-    <div id="chart-actual-loss" class="chart-container"></div>
-
-  </section>
-
-  <!-- ══════════════════════════════════════════════════════════════════
-       PAGE: Activation Functions
-       ══════════════════════════════════════════════════════════════════ -->
-  <section id="page-activations" class="dash-page">
-
+    <!-- ── Part 2: Activation Functions ─────────────────────────────── -->
     <h2 class="dash-section-title">Activation Functions</h2>
     <p class="dash-caption">
-      Nonlinear activation functions introduce the representational power that lets neural networks
-      approximate arbitrary mappings. Below we compare the three activations relevant to this thesis:
       <strong>ReLU</strong> (INR, Linear AE), <strong>Leaky ReLU</strong> (Conv2D AE),
-      and <strong>Sinusoidal</strong> (SIREN-style periodic activations from the INR literature).
+      and <strong>Sin</strong> (SIREN, periodic INR literature).
     </p>
 
     <div class="control-inline">
@@ -550,113 +547,51 @@
         <option value="0.2">0.2</option>
         <option value="0.3">0.3</option>
       </select>
-      <label>Sin frequency &omega;</label>
+      <label>Sin &omega;</label>
       <select id="act-omega" onchange="renderActivations()">
         <option value="1">1</option>
         <option value="5">5</option>
         <option value="10">10</option>
-        <option value="30" selected>30 (SIREN default)</option>
+        <option value="30" selected>30 (SIREN)</option>
       </select>
     </div>
 
-    <!-- Row 1: Function + Derivative -->
     <div class="two-col">
       <div class="col-panel">
         <h3 class="dash-section-title">f(x) &mdash; Forward Pass</h3>
-        <p class="dash-caption">How each activation transforms its input. The nonlinearity is what gives depth its power.</p>
         <div id="chart-act-forward" class="chart-container chart-tall"></div>
       </div>
       <div class="col-panel">
         <h3 class="dash-section-title">f&prime;(x) &mdash; Gradient (Backward Pass)</h3>
-        <p class="dash-caption">The derivative flows backward through the network during training. Dead zones (f&prime;=0) block learning.</p>
         <div id="chart-act-gradient" class="chart-container chart-tall"></div>
       </div>
     </div>
 
     <hr class="dash-divider">
 
-    <!-- Row 2: Properties comparison -->
     <h2 class="dash-section-title">Properties Comparison</h2>
     <div class="table-wrap">
-      <table class="dash-table" id="act-props-table">
+      <table class="dash-table">
         <thead>
-          <tr>
-            <th>Property</th>
-            <th>ReLU</th>
-            <th>Leaky ReLU (&alpha;)</th>
-            <th>Sin (&omega;x)</th>
-          </tr>
+          <tr><th>Property</th><th>ReLU</th><th>Leaky ReLU (&alpha;)</th><th>Sin (&omega;x)</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="var-name">Definition</td>
-            <td>max(0, x)</td>
-            <td>max(&alpha;x, x)</td>
-            <td>sin(&omega;x)</td>
-          </tr>
-          <tr>
-            <td class="var-name">Derivative</td>
-            <td>0 if x&lt;0, 1 if x&gt;0</td>
-            <td>&alpha; if x&lt;0, 1 if x&gt;0</td>
-            <td>&omega; cos(&omega;x)</td>
-          </tr>
-          <tr>
-            <td class="var-name">Range</td>
-            <td>[0, &infin;)</td>
-            <td>(&minus;&infin;, &infin;)</td>
-            <td>[&minus;1, 1]</td>
-          </tr>
-          <tr>
-            <td class="var-name">Dead neuron risk</td>
-            <td>Yes &mdash; x&lt;0 kills gradient</td>
-            <td>No &mdash; small gradient survives</td>
-            <td>No &mdash; gradient oscillates</td>
-          </tr>
-          <tr>
-            <td class="var-name">Periodicity</td>
-            <td>No</td>
-            <td>No</td>
-            <td>Yes &mdash; captures frequency content</td>
-          </tr>
-          <tr>
-            <td class="var-name">Used in thesis</td>
-            <td class="approach-cell">INR (all layers), Linear AE</td>
-            <td class="approach-cell">Conv2D AE (hidden layers)</td>
-            <td class="approach-cell">Literature: SIREN (Sitzmann et al., 2020)</td>
-          </tr>
+          <tr><td class="var-name">Definition</td><td>max(0, x)</td><td>max(&alpha;x, x)</td><td>sin(&omega;x)</td></tr>
+          <tr><td class="var-name">Derivative</td><td>0 if x&lt;0, 1 if x&gt;0</td><td>&alpha; if x&lt;0, 1 if x&gt;0</td><td>&omega; cos(&omega;x)</td></tr>
+          <tr><td class="var-name">Range</td><td>[0, &infin;)</td><td>(&minus;&infin;, &infin;)</td><td>[&minus;1, 1]</td></tr>
+          <tr><td class="var-name">Dead neuron risk</td><td>Yes &mdash; gradient=0 for x&lt;0</td><td>No &mdash; small gradient survives</td><td>No &mdash; gradient oscillates</td></tr>
+          <tr><td class="var-name">Used in thesis</td><td class="approach-cell">INR, Linear AE</td><td class="approach-cell">Conv2D AE</td><td class="approach-cell">SIREN (Sitzmann 2020)</td></tr>
         </tbody>
       </table>
     </div>
 
     <hr class="dash-divider">
 
-    <!-- Row 3: Dead neuron demonstration -->
     <h2 class="dash-section-title">Dead Neuron Problem</h2>
     <p class="dash-caption">
-      With ReLU, any neuron whose pre-activation is consistently negative produces zero output and zero gradient &mdash;
-      it is permanently &ldquo;dead&rdquo; and stops learning. Leaky ReLU fixes this by allowing a small gradient (&alpha;)
-      to flow through the negative region. The plots below show the gradient magnitude across the input range.
+      ReLU kills gradient for x&lt;0 (dead neurons stop learning). Leaky ReLU preserves a small gradient &alpha;.
     </p>
     <div id="chart-act-dead" class="chart-container"></div>
-
-    <hr class="dash-divider">
-
-    <!-- Row 4: Signal propagation -->
-    <h2 class="dash-section-title">Signal Propagation Through Layers</h2>
-    <p class="dash-caption">
-      How a random input signal transforms as it passes through successive layers with each activation.
-      ReLU zeroes out negative values (sparsifying), Leaky ReLU preserves shape, Sin introduces periodic structure.
-    </p>
-    <div class="control-inline">
-      <label>Layers</label>
-      <select id="act-layers" onchange="renderSignalPropagation()">
-        <option value="1">1 layer</option>
-        <option value="2">2 layers</option>
-        <option value="3" selected>3 layers</option>
-        <option value="5">5 layers</option>
-      </select>
-    </div>
-    <div id="chart-act-signal" class="chart-container chart-tall"></div>
 
   </section>
 

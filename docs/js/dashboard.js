@@ -87,8 +87,7 @@
       case 'compression': renderCompressionPage(); break;
       case 'comparison': renderComparisonPage(); break;
       case 'distcompare': renderDistComparePage(); break;
-      case 'optimization': renderOptimizationPage(); break;
-      case 'activations': renderActivationsPage(); break;
+      case 'training': renderTrainingPage(); break;
     }
   }
 
@@ -1226,359 +1225,431 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PAGE: MSE Optimization
+  // PAGE: Training & Optimization (merged)
   // ══════════════════════════════════════════════════════════════════════
 
-  var optCache = {};
-
-  function renderOptimizationPage() {
-    runAndRenderOptimization();
-  }
-
-  // MSE loss surface: L(w1,w2) = 0.5*(w1^2 + 5*w2^2) — elongated bowl (Geron Fig 4-7)
-  function lossFn(w1, w2) { return 0.5 * (w1 * w1 + 5 * w2 * w2); }
-  function gradFn(w1, w2) { return [w1, 5 * w2]; }
-
-  // Simulate optimizers (based on Geron Ch4 & Ch11 equations)
-  function simulateGD(lr, steps, tol) {
-    var w = [3.0, 2.5], path = [[w[0], w[1]]], losses = [lossFn(w[0], w[1])];
-    for (var i = 0; i < steps; i++) {
-      var g = gradFn(w[0], w[1]);
-      w = [w[0] - lr * g[0], w[1] - lr * g[1]];
-      var l = lossFn(w[0], w[1]);
-      path.push([w[0], w[1]]);
-      losses.push(l);
-      if (l < tol) break;
-    }
-    return { path: path, losses: losses };
-  }
-
-  function simulateSGD(lr, steps, tol) {
-    var w = [3.0, 2.5], path = [[w[0], w[1]]], losses = [lossFn(w[0], w[1])];
-    // Simulated annealing schedule: lr decays (Geron p125)
-    var t0 = 5, t1 = 50;
-    for (var i = 0; i < steps; i++) {
-      var eta = t0 / (i + t1) * (lr / 0.001) * 10;
-      var g = gradFn(w[0], w[1]);
-      // Add noise to simulate stochastic sampling (Geron Fig 4-9: "much more stochastic")
-      var noise1 = (Math.sin(i * 7.3 + 1.7) * 0.5 + Math.sin(i * 13.1) * 0.3) * Math.max(0.3, 1 - i / steps);
-      var noise2 = (Math.sin(i * 11.1 + 2.3) * 0.5 + Math.sin(i * 17.7) * 0.3) * Math.max(0.3, 1 - i / steps);
-      w = [w[0] - eta * (g[0] + noise1), w[1] - eta * (g[1] + noise2)];
-      var l = lossFn(w[0], w[1]);
-      path.push([w[0], w[1]]);
-      losses.push(l);
-      if (l < tol) break;
-    }
-    return { path: path, losses: losses };
-  }
-
-  function simulateAdam(lr, steps, tol) {
-    // Adam algorithm (Geron Eq 11-8, Kingma & Ba 2014)
-    var w = [3.0, 2.5], path = [[w[0], w[1]]], losses = [lossFn(w[0], w[1])];
-    var beta1 = 0.9, beta2 = 0.999, eps = 1e-7;
-    var m = [0, 0], s = [0, 0];
-    for (var i = 0; i < steps; i++) {
-      var t = i + 1;
-      var g = gradFn(w[0], w[1]);
-      // Step 1: m ← β1*m + (1-β1)*g  (momentum)
-      m[0] = beta1 * m[0] + (1 - beta1) * g[0];
-      m[1] = beta1 * m[1] + (1 - beta1) * g[1];
-      // Step 2: s ← β2*s + (1-β2)*g²  (RMSProp)
-      s[0] = beta2 * s[0] + (1 - beta2) * g[0] * g[0];
-      s[1] = beta2 * s[1] + (1 - beta2) * g[1] * g[1];
-      // Step 3-4: bias correction
-      var mhat = [m[0] / (1 - Math.pow(beta1, t)), m[1] / (1 - Math.pow(beta1, t))];
-      var shat = [s[0] / (1 - Math.pow(beta2, t)), s[1] / (1 - Math.pow(beta2, t))];
-      // Step 5: θ ← θ - η * m̂ / (√ŝ + ε)
-      w[0] = w[0] - lr * mhat[0] / (Math.sqrt(shat[0]) + eps);
-      w[1] = w[1] - lr * mhat[1] / (Math.sqrt(shat[1]) + eps);
-      var l = lossFn(w[0], w[1]);
-      path.push([w[0], w[1]]);
-      losses.push(l);
-      if (l < tol) break;
-    }
-    return { path: path, losses: losses };
-  }
-
-  function getConvergenceStep(losses, threshold) {
-    for (var i = 0; i < losses.length; i++) {
-      if (losses[i] < threshold) return i;
-    }
-    return losses.length;
-  }
-
-  window.renderOptimization = function () { runAndRenderOptimization(); };
-  window.rerunOptimization = function () {
-    optCache = {};
-    runAndRenderOptimization();
-  };
-
-  function runAndRenderOptimization() {
-    var optSelect = document.getElementById('opt-select');
-    var lrSelect = document.getElementById('opt-lr-select');
-    if (!optSelect || !lrSelect) return;
-    var selectedOpt = optSelect.value;
-    var lr = parseFloat(lrSelect.value);
-    var tol = 1e-8;
-    var steps = 500;
-
-    // Run simulations
-    var results = {
-      gd: simulateGD(lr, steps, tol),
-      sgd: simulateSGD(lr, steps, tol),
-      adam: simulateAdam(lr, steps, tol),
-    };
-
-    // Which to show
-    var show = selectedOpt === 'all' ? ['gd', 'sgd', 'adam'] : [selectedOpt];
-    var optNames = { gd: 'Gradient Descent', sgd: 'SGD', adam: 'Adam' };
-    var optColors = { gd: '#636EFA', sgd: '#EF553B', adam: '#00CC96' };
-
-    // ── 3D Surface ──────────────────────────────────────────────────
-    var surfaceN = 60;
-    var surfX = [], surfY = [], surfZ = [];
-    for (var i = 0; i < surfaceN; i++) {
-      var row_x = [], row_y = [], row_z = [];
-      for (var j = 0; j < surfaceN; j++) {
-        var x = -4 + 8 * i / (surfaceN - 1);
-        var y = -3 + 6 * j / (surfaceN - 1);
-        row_x.push(x);
-        row_y.push(y);
-        row_z.push(lossFn(x, y));
-      }
-      surfX.push(row_x);
-      surfY.push(row_y);
-      surfZ.push(row_z);
-    }
-
-    var traces3d = [{
-      type: 'surface',
-      x: surfX, y: surfY, z: surfZ,
-      colorscale: 'Blues', opacity: 0.7,
-      showscale: false,
-      contours: { z: { show: true, usecolormap: true, project: { z: true } } },
-    }];
-
-    show.forEach(function (opt) {
-      var p = results[opt].path;
-      traces3d.push({
-        type: 'scatter3d',
-        mode: 'lines+markers',
-        x: p.map(function (v) { return v[0]; }),
-        y: p.map(function (v) { return v[1]; }),
-        z: p.map(function (v) { return lossFn(v[0], v[1]); }),
-        name: optNames[opt],
-        line: { color: optColors[opt], width: 4 },
-        marker: { size: 2, color: optColors[opt] },
-      });
-    });
-
-    Plotly.react('chart-opt-3d', traces3d, Object.assign({}, PLOTLY_LAYOUT, {
-      height: 450,
-      scene: {
-        xaxis: { title: 'w₁' },
-        yaxis: { title: 'w₂' },
-        zaxis: { title: 'MSE Loss' },
-        camera: { eye: { x: 1.5, y: 1.5, z: 1.2 } },
-      },
-      margin: { l: 0, r: 0, t: 10, b: 0 },
-      legend: { orientation: 'h', y: -0.05 },
-    }), { responsive: true, displayModeBar: false });
-
-    // ── 2D Contour ──────────────────────────────────────────────────
-    var contN = 80;
-    var contX = [], contY = [], contZ = [];
-    for (var i = 0; i < contN; i++) {
-      contX.push(-4 + 8 * i / (contN - 1));
-      contY.push(-3 + 6 * i / (contN - 1));
-    }
-    for (var i = 0; i < contN; i++) {
-      var row = [];
-      for (var j = 0; j < contN; j++) {
-        row.push(lossFn(contX[j], contY[i]));
-      }
-      contZ.push(row);
-    }
-
-    var tracesCont = [{
-      type: 'contour',
-      x: contX, y: contY, z: contZ,
-      colorscale: 'Blues',
-      ncontours: 20,
-      showscale: false,
-      line: { width: 0.5 },
-    }];
-
-    show.forEach(function (opt) {
-      var p = results[opt].path;
-      tracesCont.push({
-        type: 'scatter',
-        mode: 'lines+markers',
-        x: p.map(function (v) { return v[0]; }),
-        y: p.map(function (v) { return v[1]; }),
-        name: optNames[opt],
-        line: { color: optColors[opt], width: 2 },
-        marker: { size: 3, color: optColors[opt] },
-      });
-    });
-
-    // Global minimum marker
-    tracesCont.push({
-      type: 'scatter', mode: 'markers',
-      x: [0], y: [0],
-      marker: { size: 12, color: '#FFD700', symbol: 'star', line: { width: 1, color: '#333' } },
-      name: 'Global Min',
-      showlegend: true,
-    });
-
-    Plotly.react('chart-opt-contour', tracesCont, Object.assign({}, PLOTLY_LAYOUT, {
-      height: 450,
-      xaxis: { title: 'w₁', range: [-4, 4] },
-      yaxis: { title: 'w₂', range: [-3, 3], scaleanchor: 'x' },
-      legend: { orientation: 'h', y: -0.15 },
-    }), { responsive: true, displayModeBar: false });
-
-    // ── Loss Convergence ────────────────────────────────────────────
-    var tracesLoss = [];
-    show.forEach(function (opt) {
-      tracesLoss.push({
-        type: 'scatter',
-        mode: 'lines',
-        x: results[opt].losses.map(function (_, i) { return i; }),
-        y: results[opt].losses,
-        name: optNames[opt],
-        line: { color: optColors[opt], width: 2 },
-      });
-    });
-
-    // Tolerance line
-    tracesLoss.push({
-      type: 'scatter', mode: 'lines',
-      x: [0, steps], y: [tol, tol],
-      name: 'Tolerance ε=' + tol,
-      line: { color: '#999', dash: 'dash', width: 1 },
-      showlegend: true,
-    });
-
-    Plotly.react('chart-opt-loss', tracesLoss, Object.assign({}, PLOTLY_LAYOUT, {
-      height: 400,
-      xaxis: { title: 'Iteration' },
-      yaxis: { title: 'MSE Loss', type: 'log' },
-      legend: { orientation: 'h', y: -0.15 },
-    }), { responsive: true, displayModeBar: false });
-
-    // ── Optimizer Properties Panel ──────────────────────────────────
-    var propsDiv = document.getElementById('opt-properties');
-    if (propsDiv) {
-      var tolerances = [0.1, 0.01, 0.001, 0.0001];
-      var html = '<h4 style="color:var(--accent2); margin-bottom:12px;">Convergence Rate Comparison</h4>';
-      html += '<p class="dash-caption" style="margin-bottom:12px;">Iterations to reach tolerance ε (Geron Ch4: "O(1/ε) — dividing ε by 10 ≈ 10× more iterations")</p>';
-      html += '<table class="dash-table"><thead><tr><th>Tolerance ε</th>';
-      ['gd', 'sgd', 'adam'].forEach(function (opt) {
-        html += '<th style="color:' + optColors[opt] + '">' + optNames[opt] + '</th>';
-      });
-      html += '</tr></thead><tbody>';
-      tolerances.forEach(function (t) {
-        html += '<tr><td>' + t + '</td>';
-        ['gd', 'sgd', 'adam'].forEach(function (opt) {
-          var step = getConvergenceStep(results[opt].losses, t);
-          var label = step >= results[opt].losses.length ? '>' + results[opt].losses.length : step;
-          html += '<td>' + label + '</td>';
-        });
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-
-      // Optimizer update rules (from Geron)
-      html += '<h4 style="color:var(--accent2); margin:20px 0 12px;">Update Rules</h4>';
-
-      var rules = [
-        { name: 'Gradient Descent', color: optColors.gd,
-          eq: 'θ ← θ − η ∇<sub>θ</sub> MSE(θ)',
-          desc: 'Uses full gradient. Convex MSE → guaranteed global minimum. Convergence O(1/ε). (Geron Eq 4-7)' },
-        { name: 'SGD', color: optColors.sgd,
-          eq: 'θ ← θ − η(t) ∇<sub>θ</sub> MSE(θ; x<sup>(i)</sup>)',
-          desc: 'Random single sample per step → noisy but fast. Learning schedule η(t) = t₀/(t+t₁) for convergence. Can escape local minima. (Geron Fig 4-9)' },
-        { name: 'Adam', color: optColors.adam,
-          eq: 'θ ← θ − η m̂ / (√ŝ + ε)',
-          desc: 'Adaptive LR: tracks momentum m (β₁=0.9) + squared gradients s (β₂=0.999) with bias correction. Fastest convergence, default choice for DNNs. (Geron Eq 11-8, Kingma & Ba 2014)' },
-      ];
-
-      rules.forEach(function (r) {
-        html += '<div style="background:#f8f9fc; border:1px solid var(--border); border-left:4px solid ' + r.color + '; border-radius:6px; padding:12px 16px; margin-bottom:10px;">';
-        html += '<strong style="color:' + r.color + '">' + r.name + '</strong>';
-        html += '<div style="font-family:var(--font-mono); font-size:0.9rem; margin:6px 0; color:var(--text);">' + r.eq + '</div>';
-        html += '<div style="font-size:0.82rem; color:var(--text-dim);">' + r.desc + '</div>';
-        html += '</div>';
-      });
-
-      propsDiv.innerHTML = html;
-    }
-
-    // ── Actual Training Loss ────────────────────────────────────────
-    renderActualLoss();
-  }
-
-  // Load actual training CSVs
-  window.renderActualLoss = function () {
-    var modeSelect = document.getElementById('opt-mode-select');
-    if (!modeSelect) return;
-    var mode = modeSelect.value;
-    var models = ['base', 'medium', 'large'];
-    var mColors = { base: '#636EFA', medium: '#EF553B', large: '#00CC96' };
-
-    // Use manifest metrics as fallback — we don't have per-epoch CSVs on the web
-    // Show a synthetic loss curve that converges to final MSE (from PSNR)
-    var traces = [];
-    models.forEach(function (m) {
-      var key = mode + '_' + m;
-      var met = manifest.metrics[key];
-      if (!met) return;
-      // Convert PSNR to MSE: MSE = 1 / 10^(PSNR/10)
-      var finalMSE = 1.0 / Math.pow(10, met.psnr / 10);
-      var nEpochs = mode === 'offline' ? 150 : 2000;
-      var epochs = [], lossVals = [];
-      // Simulate exponential decay to final MSE
-      var initLoss = 0.1;
-      var tau = nEpochs / 5;
-      for (var i = 0; i < nEpochs; i++) {
-        epochs.push(i);
-        lossVals.push(finalMSE + (initLoss - finalMSE) * Math.exp(-i / tau));
-      }
-      traces.push({
-        type: 'scatter', mode: 'lines',
-        x: epochs, y: lossVals,
-        name: m.charAt(0).toUpperCase() + m.slice(1) + ' (' + met.psnr.toFixed(1) + ' dB)',
-        line: { color: mColors[m], width: 2 },
-      });
-    });
-
-    Plotly.react('chart-actual-loss', traces, Object.assign({}, PLOTLY_LAYOUT, {
-      height: 400,
-      xaxis: { title: mode === 'offline' ? 'Epoch' : 'Total Epoch (100 × 20 windows)' },
-      yaxis: { title: 'MSE Loss', type: 'log' },
-      legend: { orientation: 'h', y: -0.15 },
-    }), { responsive: true, displayModeBar: false });
-  };
-
-  // ══════════════════════════════════════════════════════════════════════
-  // ACTIVATION FUNCTIONS PAGE
-  // ══════════════════════════════════════════════════════════════════════
-
+  var OPT_NAMES = { gd: 'Gradient Descent', sgd: 'SGD', adam: 'Adam' };
+  var OPT_COLORS = { gd: '#636EFA', sgd: '#EF553B', adam: '#00CC96' };
   var ACT_COLORS = { relu: '#E74C3C', leaky: '#2874A6', sin: '#27AE60' };
+  var WINDOW_COLORS = ['#E74C3C', '#2874A6', '#27AE60', '#8E44AD', '#E67E22'];
+  var LIGHT_CONTOUR = [[0, '#f7fbff'], [0.15, '#deebf7'], [0.3, '#c6dbef'], [0.5, '#9ecae1'], [0.7, '#6baed6'], [0.85, '#3182bd'], [1, '#08519c']];
 
-  function renderActivationsPage() {
+  // Animation state
+  var optAnim = { timer: null, step: 0, totalSteps: 0, paths: {}, losses: {}, surface: null, show: [], scenario: '' };
+
+  function renderTrainingPage() {
+    renderTrainingOpt();
     renderActivations();
     renderDeadNeuronChart();
-    renderSignalPropagation();
   }
 
   function linspace(a, b, n) {
-    var arr = [];
-    var step = (b - a) / (n - 1);
+    var arr = [], step = (b - a) / (n - 1);
     for (var i = 0; i < n; i++) arr.push(a + step * i);
     return arr;
   }
+
+  // ── Loss surface definitions per scenario ──────────────────────────
+
+  function offlineLoss(w1, w2) { return 0.5 * (w1 * w1 + 5 * w2 * w2); }
+  function offlineGrad(w1, w2) { return [w1, 5 * w2]; }
+
+  var WINDOW_MINS = [[2.0, 1.5], [0.5, -1.0], [-1.5, 0.8], [-0.5, -0.5]];
+
+  function windowLoss(w1, w2, cx, cy) {
+    var d1 = w1 - cx, d2 = w2 - cy;
+    return 0.5 * (d1 * d1 + 3 * d2 * d2);
+  }
+  function windowGrad(w1, w2, cx, cy) { return [w1 - cx, 3 * (w2 - cy)]; }
+
+  function erLoss(w1, w2) {
+    var total = 0;
+    for (var i = 0; i < WINDOW_MINS.length; i++) total += windowLoss(w1, w2, WINDOW_MINS[i][0], WINDOW_MINS[i][1]);
+    return total / WINDOW_MINS.length;
+  }
+  function erGrad(w1, w2) {
+    var g = [0, 0];
+    for (var i = 0; i < WINDOW_MINS.length; i++) {
+      var wg = windowGrad(w1, w2, WINDOW_MINS[i][0], WINDOW_MINS[i][1]);
+      g[0] += wg[0]; g[1] += wg[1];
+    }
+    return [g[0] / WINDOW_MINS.length, g[1] / WINDOW_MINS.length];
+  }
+
+  // ── Optimizer simulators ───────────────────────────────────────────
+
+  function simGD(lr, steps, lossFn, gradFn, w0) {
+    var w = w0.slice(), path = [w.slice()], losses = [lossFn(w[0], w[1])];
+    for (var i = 0; i < steps; i++) {
+      var g = gradFn(w[0], w[1]);
+      w = [w[0] - lr * g[0], w[1] - lr * g[1]];
+      path.push(w.slice()); losses.push(lossFn(w[0], w[1]));
+    }
+    return { path: path, losses: losses };
+  }
+
+  function simSGD(lr, steps, lossFn, gradFn, w0) {
+    var w = w0.slice(), path = [w.slice()], losses = [lossFn(w[0], w[1])];
+    for (var i = 0; i < steps; i++) {
+      var eta = lr / (1 + 0.02 * i);
+      var g = gradFn(w[0], w[1]);
+      var noise = 0.4 * Math.max(0.2, 1 - i / steps);
+      var n1 = (Math.sin(i * 7.3 + 1.7) * 0.5 + Math.sin(i * 13.1) * 0.3) * noise;
+      var n2 = (Math.sin(i * 11.1 + 2.3) * 0.5 + Math.sin(i * 17.7) * 0.3) * noise;
+      w = [w[0] - eta * (g[0] + n1), w[1] - eta * (g[1] + n2)];
+      path.push(w.slice()); losses.push(lossFn(w[0], w[1]));
+    }
+    return { path: path, losses: losses };
+  }
+
+  function simAdam(lr, steps, lossFn, gradFn, w0) {
+    var w = w0.slice(), path = [w.slice()], losses = [lossFn(w[0], w[1])];
+    var b1 = 0.9, b2 = 0.999, eps = 1e-7, m = [0, 0], s = [0, 0];
+    for (var i = 0; i < steps; i++) {
+      var t = i + 1, g = gradFn(w[0], w[1]);
+      m = [b1 * m[0] + (1 - b1) * g[0], b1 * m[1] + (1 - b1) * g[1]];
+      s = [b2 * s[0] + (1 - b2) * g[0] * g[0], b2 * s[1] + (1 - b2) * g[1] * g[1]];
+      var mh = [m[0] / (1 - Math.pow(b1, t)), m[1] / (1 - Math.pow(b1, t))];
+      var sh = [s[0] / (1 - Math.pow(b2, t)), s[1] / (1 - Math.pow(b2, t))];
+      w = [w[0] - lr * mh[0] / (Math.sqrt(sh[0]) + eps), w[1] - lr * mh[1] / (Math.sqrt(sh[1]) + eps)];
+      path.push(w.slice()); losses.push(lossFn(w[0], w[1]));
+    }
+    return { path: path, losses: losses };
+  }
+
+  function simOnlineNaive(optKey, lr, stepsPerWindow) {
+    var w = [3.0, 2.5], fullPath = [w.slice()], windowPaths = [];
+    for (var wi = 0; wi < WINDOW_MINS.length; wi++) {
+      var cx = WINDOW_MINS[wi][0], cy = WINDOW_MINS[wi][1];
+      var lf = function (w1, w2) { return windowLoss(w1, w2, cx, cy); };
+      var gf = function (w1, w2) { return windowGrad(w1, w2, cx, cy); };
+      var sim = optKey === 'adam' ? simAdam : optKey === 'sgd' ? simSGD : simGD;
+      var res = sim(lr, stepsPerWindow, lf, gf, w);
+      w = res.path[res.path.length - 1];
+      windowPaths.push(res.path);
+      fullPath = fullPath.concat(res.path.slice(1));
+    }
+    var globalLosses = fullPath.map(function (p) {
+      var total = 0;
+      for (var i = 0; i < WINDOW_MINS.length; i++) total += windowLoss(p[0], p[1], WINDOW_MINS[i][0], WINDOW_MINS[i][1]);
+      return total / WINDOW_MINS.length;
+    });
+    return { path: fullPath, losses: globalLosses, windowPaths: windowPaths };
+  }
+
+  // ── Render contour surface (static background) ─────────────────────
+
+  function buildContourSurface(scenario) {
+    var range = 4.5, contN = 80;
+    var contX = linspace(-range, range, contN);
+    var contY = linspace(-range, range, contN);
+    var lossFn;
+    if (scenario === 'offline') lossFn = offlineLoss;
+    else if (scenario === 'online_er') lossFn = erLoss;
+    else {
+      var lw = WINDOW_MINS[WINDOW_MINS.length - 1];
+      lossFn = function (w1, w2) { return windowLoss(w1, w2, lw[0], lw[1]); };
+    }
+    var contZ = [];
+    for (var i = 0; i < contN; i++) {
+      var row = [];
+      for (var j = 0; j < contN; j++) row.push(lossFn(contX[j], contY[i]));
+      contZ.push(row);
+    }
+    return { contX: contX, contY: contY, contZ: contZ, lossFn: lossFn, range: range };
+  }
+
+  // ── Draw frame at step N ───────────────────────────────────────────
+
+  function drawOptFrame(step) {
+    var a = optAnim;
+    var surf = a.surface;
+    var range = surf.range;
+    var scenario = a.scenario;
+
+    // Update slider + label
+    var slider = document.getElementById('opt-step-slider');
+    var label = document.getElementById('opt-step-label');
+    if (slider) slider.value = step;
+    if (label) label.textContent = 'Step ' + step + ' / ' + a.totalSteps;
+
+    // ── 2D contour ───────────────────────────────────────────────
+    var traces2d = [{
+      type: 'contour', x: surf.contX, y: surf.contY, z: surf.contZ,
+      colorscale: LIGHT_CONTOUR, ncontours: 25, showscale: false,
+      line: { width: 0.5, color: 'rgba(100,100,100,0.3)' },
+    }];
+
+    // Stars for minima
+    if (scenario === 'online') {
+      WINDOW_MINS.forEach(function (wm, wi) {
+        traces2d.push({
+          type: 'scatter', mode: 'markers',
+          x: [wm[0]], y: [wm[1]],
+          marker: { size: 14, color: WINDOW_COLORS[wi], symbol: 'star', line: { width: 1, color: '#333' } },
+          name: 'W' + (wi + 1) + ' min', showlegend: true,
+        });
+      });
+    } else {
+      var minPt = scenario === 'offline' ? [0, 0] :
+        [WINDOW_MINS.reduce(function (s, w) { return s + w[0]; }, 0) / WINDOW_MINS.length,
+         WINDOW_MINS.reduce(function (s, w) { return s + w[1]; }, 0) / WINDOW_MINS.length];
+      traces2d.push({
+        type: 'scatter', mode: 'markers', x: [minPt[0]], y: [minPt[1]],
+        marker: { size: 14, color: '#FFD700', symbol: 'star', line: { width: 1, color: '#333' } },
+        name: 'Global Min', showlegend: true,
+      });
+    }
+
+    // Optimizer paths up to current step
+    a.show.forEach(function (ok) {
+      var fullPath = a.paths[ok];
+      var n = Math.min(step + 1, fullPath.length);
+      var px = [], py = [];
+      for (var i = 0; i < n; i++) { px.push(fullPath[i][0]); py.push(fullPath[i][1]); }
+
+      // Trail (fading line)
+      traces2d.push({
+        type: 'scatter', mode: 'lines',
+        x: px, y: py,
+        line: { color: OPT_COLORS[ok], width: 2 },
+        name: OPT_NAMES[ok], showlegend: true, legendgroup: ok,
+      });
+      // Dots along trail
+      traces2d.push({
+        type: 'scatter', mode: 'markers',
+        x: px, y: py,
+        marker: { size: 4, color: OPT_COLORS[ok], opacity: 0.5 },
+        showlegend: false, legendgroup: ok,
+      });
+      // Current position (big dot)
+      if (n > 0) {
+        traces2d.push({
+          type: 'scatter', mode: 'markers',
+          x: [px[n - 1]], y: [py[n - 1]],
+          marker: { size: 10, color: OPT_COLORS[ok], line: { width: 2, color: '#fff' } },
+          showlegend: false, legendgroup: ok,
+        });
+      }
+      // Start marker
+      traces2d.push({
+        type: 'scatter', mode: 'markers',
+        x: [fullPath[0][0]], y: [fullPath[0][1]],
+        marker: { size: 8, color: '#333', symbol: 'diamond', line: { width: 1, color: '#fff' } },
+        name: ok === a.show[0] ? 'Start' : undefined,
+        showlegend: ok === a.show[0], legendgroup: 'start',
+      });
+    });
+
+    Plotly.react('chart-opt-contour', traces2d, Object.assign({}, PLOTLY_LAYOUT, {
+      height: 480,
+      xaxis: { title: 'w₁', range: [-range, range], autorange: false, gridcolor: 'rgba(0,0,0,0.06)' },
+      yaxis: { title: 'w₂', range: [-range, range], autorange: false, gridcolor: 'rgba(0,0,0,0.06)' },
+      legend: { orientation: 'h', y: -0.12, font: { size: 11 } },
+    }), { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d', 'hoverCompareCartesian', 'hoverClosestCartesian'], displaylogo: false });
+
+    // ── 3D surface ───────────────────────────────────────────────
+    var surfN = 50, surfX = [], surfY = [], surfZ = [];
+    for (var i = 0; i < surfN; i++) {
+      var rx = [], ry = [], rz = [];
+      for (var j = 0; j < surfN; j++) {
+        var x = -range + 2 * range * i / (surfN - 1);
+        var y = -range + 2 * range * j / (surfN - 1);
+        rx.push(x); ry.push(y); rz.push(surf.lossFn(x, y));
+      }
+      surfX.push(rx); surfY.push(ry); surfZ.push(rz);
+    }
+
+    var t3d = [{
+      type: 'surface', x: surfX, y: surfY, z: surfZ,
+      colorscale: LIGHT_CONTOUR, opacity: 0.75, showscale: false,
+    }];
+
+    a.show.forEach(function (ok) {
+      var fullPath = a.paths[ok];
+      var n = Math.min(step + 1, fullPath.length);
+      t3d.push({
+        type: 'scatter3d', mode: 'lines+markers',
+        x: fullPath.slice(0, n).map(function (p) { return p[0]; }),
+        y: fullPath.slice(0, n).map(function (p) { return p[1]; }),
+        z: fullPath.slice(0, n).map(function (p) { return surf.lossFn(p[0], p[1]); }),
+        name: OPT_NAMES[ok], line: { color: OPT_COLORS[ok], width: 5 },
+        marker: { size: 3, color: OPT_COLORS[ok] },
+      });
+    });
+
+    Plotly.react('chart-opt-3d', t3d, Object.assign({}, PLOTLY_LAYOUT, {
+      height: 480,
+      scene: { xaxis: { title: 'w₁' }, yaxis: { title: 'w₂' }, zaxis: { title: 'Loss' },
+               camera: { eye: { x: 1.5, y: 1.5, z: 1.2 } } },
+      margin: { l: 0, r: 0, t: 10, b: 0 },
+      legend: { orientation: 'h', y: -0.05 },
+    }), { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['orbitRotation', 'hoverClosest3d'], displaylogo: false });
+
+    // ── Loss curve ───────────────────────────────────────────────
+    var tracesLoss = [];
+    a.show.forEach(function (ok) {
+      var allLosses = a.losses[ok];
+      var n = Math.min(step + 1, allLosses.length);
+      tracesLoss.push({
+        type: 'scatter', mode: 'lines',
+        x: allLosses.slice(0, n).map(function (_, i) { return i; }),
+        y: allLosses.slice(0, n),
+        name: OPT_NAMES[ok], line: { color: OPT_COLORS[ok], width: 2.5 },
+      });
+      // Current step marker on loss curve
+      if (n > 0) {
+        tracesLoss.push({
+          type: 'scatter', mode: 'markers',
+          x: [n - 1], y: [allLosses[n - 1]],
+          marker: { size: 8, color: OPT_COLORS[ok], line: { width: 2, color: '#fff' } },
+          showlegend: false,
+        });
+      }
+    });
+    // Window boundary lines for online
+    if (scenario === 'online') {
+      for (var wi = 1; wi < WINDOW_MINS.length; wi++) {
+        tracesLoss.push({
+          type: 'scatter', mode: 'lines',
+          x: [wi * 41, wi * 41], y: [0.001, 30],
+          line: { color: WINDOW_COLORS[wi], width: 1, dash: 'dot' },
+          name: wi === 1 ? 'Window boundary' : undefined,
+          showlegend: wi === 1, legendgroup: 'wbound',
+        });
+      }
+    }
+
+    Plotly.react('chart-opt-loss', tracesLoss, Object.assign({}, PLOTLY_LAYOUT, {
+      height: 400,
+      xaxis: { title: scenario === 'online' ? 'Step (across windows)' : 'Iteration' },
+      yaxis: { title: 'MSE Loss', type: 'log' },
+      legend: { orientation: 'h', y: -0.15 },
+    }), { responsive: true, displayModeBar: true, modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'], displaylogo: false });
+  }
+
+  // ── Animation controls ─────────────────────────────────────────────
+
+  window.toggleOptPlay = function () {
+    var btn = document.getElementById('opt-play-btn');
+    if (optAnim.timer) {
+      clearInterval(optAnim.timer);
+      optAnim.timer = null;
+      btn.innerHTML = '&#9654; Play';
+    } else {
+      if (optAnim.step >= optAnim.totalSteps) optAnim.step = 0;
+      var speed = parseInt(document.getElementById('opt-speed').value);
+      btn.innerHTML = '&#9646;&#9646; Pause';
+      optAnim.timer = setInterval(function () {
+        if (optAnim.step >= optAnim.totalSteps) {
+          clearInterval(optAnim.timer);
+          optAnim.timer = null;
+          btn.innerHTML = '&#9654; Play';
+          return;
+        }
+        optAnim.step++;
+        drawOptFrame(optAnim.step);
+      }, speed);
+    }
+  };
+
+  window.resetOptAnim = function () {
+    if (optAnim.timer) { clearInterval(optAnim.timer); optAnim.timer = null; }
+    document.getElementById('opt-play-btn').innerHTML = '&#9654; Play';
+    optAnim.step = 0;
+    drawOptFrame(0);
+  };
+
+  window.seekOptStep = function (step) {
+    optAnim.step = step;
+    drawOptFrame(step);
+  };
+
+  // ── Main setup (precompute all paths, draw frame 0) ────────────────
+
+  window.renderTrainingOpt = function () {
+    // Stop any running animation
+    if (optAnim.timer) { clearInterval(optAnim.timer); optAnim.timer = null; }
+    document.getElementById('opt-play-btn').innerHTML = '&#9654; Play';
+
+    var scenario = document.getElementById('opt-scenario').value;
+    var optKey = document.getElementById('opt-select').value;
+    var lr = parseFloat(document.getElementById('opt-lr-select').value);
+    var steps = 150;
+    var stepsPerWindow = 40;
+    var w0 = [3.0, 2.5];
+
+    // Scenario info
+    var infoDiv = document.getElementById('opt-scenario-info');
+    var infos = {
+      offline: '<strong>Offline (Batch):</strong> The model sees the entire dataset every epoch. MSE loss forms a single convex bowl with one global minimum. Adam converges smoothly.',
+      online: '<strong>Online (Naive):</strong> The model trains on one temporal window at a time. Each window defines a different loss surface with its own minimum (coloured stars). The optimizer chases each new minimum, overwriting previous knowledge &mdash; this is <strong>catastrophic forgetting</strong>.',
+      online_er: '<strong>Online + Experience Replay:</strong> Replay mixes past samples into each window&rsquo;s training batch. The effective loss surface becomes a weighted average of all windows, and Adam converges toward a <strong>compromise minimum</strong> (gold star) that serves all windows.',
+    };
+    infoDiv.innerHTML = infos[scenario];
+
+    var show = optKey === 'all' ? ['gd', 'sgd', 'adam'] : [optKey];
+
+    // Precompute all paths and losses
+    var surface = buildContourSurface(scenario);
+    var paths = {}, losses = {};
+    var maxLen = 0;
+
+    if (scenario === 'online') {
+      show.forEach(function (ok) {
+        var res = simOnlineNaive(ok, lr, stepsPerWindow);
+        paths[ok] = res.path;
+        losses[ok] = res.losses;
+        maxLen = Math.max(maxLen, res.path.length);
+      });
+    } else {
+      var lf = scenario === 'offline' ? offlineLoss : erLoss;
+      var gf = scenario === 'offline' ? offlineGrad : erGrad;
+      show.forEach(function (ok) {
+        var sim = ok === 'adam' ? simAdam : ok === 'sgd' ? simSGD : simGD;
+        var res = sim(lr, steps, lf, gf, w0);
+        paths[ok] = res.path;
+        losses[ok] = res.losses;
+        maxLen = Math.max(maxLen, res.path.length);
+      });
+    }
+
+    // Store animation state
+    optAnim.paths = paths;
+    optAnim.losses = losses;
+    optAnim.surface = surface;
+    optAnim.show = show;
+    optAnim.scenario = scenario;
+    optAnim.totalSteps = maxLen - 1;
+    optAnim.step = 0;
+
+    // Update slider max
+    var slider = document.getElementById('opt-step-slider');
+    if (slider) slider.max = optAnim.totalSteps;
+
+    // Draw initial frame (step 0 = starting position only)
+    drawOptFrame(0);
+
+    // Update rules panel
+    var propsDiv = document.getElementById('opt-properties');
+    if (!propsDiv) return;
+    var rules = [
+      { name: 'GD', color: OPT_COLORS.gd, eq: 'θ ← θ − η ∇<sub>θ</sub> L(θ)', desc: 'Full gradient, convex MSE → guaranteed global min (Geron Eq 4-7)' },
+      { name: 'SGD', color: OPT_COLORS.sgd, eq: 'θ ← θ − η(t) ∇<sub>θ</sub> L(θ; x<sup>(i)</sup>)', desc: 'Mini-batch gradient + learning schedule η(t)=t₀/(t+t₁) (Geron Fig 4-9)' },
+      { name: 'Adam', color: OPT_COLORS.adam, eq: 'θ ← θ − η m̂ / (√ŝ + ε)', desc: 'Momentum (β₁=0.9) + RMSProp (β₂=0.999) with bias correction. Thesis default. (Kingma & Ba 2014, Geron Eq 11-8)' },
+    ];
+    var html = '';
+    rules.forEach(function (r) {
+      html += '<div style="background:#f8f9fc; border:1px solid var(--border); border-left:4px solid ' + r.color + '; border-radius:6px; padding:12px 16px; margin-bottom:10px;">';
+      html += '<strong style="color:' + r.color + '">' + r.name + '</strong>';
+      html += '<div style="font-family:var(--font-mono); font-size:0.9rem; margin:6px 0;">' + r.eq + '</div>';
+      html += '<div style="font-size:0.82rem; color:var(--text-dim);">' + r.desc + '</div>';
+      html += '</div>';
+    });
+    propsDiv.innerHTML = html;
+  };
+
+  // ── Activation function renderers ──────────────────────────────────
 
   function relu(x) { return Math.max(0, x); }
   function reluGrad(x) { return x > 0 ? 1 : 0; }
@@ -1592,146 +1663,46 @@
     var omega = parseFloat(document.getElementById('act-omega').value);
     var xs = linspace(-3, 3, 600);
 
-    var forwardTraces = [
+    Plotly.react('chart-act-forward', [
       { x: xs, y: xs.map(relu), name: 'ReLU', line: { color: ACT_COLORS.relu, width: 2.5 } },
       { x: xs, y: xs.map(function (x) { return leakyRelu(x, alpha); }), name: 'Leaky ReLU (α=' + alpha + ')', line: { color: ACT_COLORS.leaky, width: 2.5 } },
       { x: xs, y: xs.map(function (x) { return sinAct(x, omega); }), name: 'Sin (ω=' + omega + ')', line: { color: ACT_COLORS.sin, width: 2.5 } },
-    ];
+    ], Object.assign({}, PLOTLY_LAYOUT, {
+      height: 450,
+      xaxis: { title: 'x', zeroline: true, zerolinecolor: '#ccc' },
+      yaxis: { title: 'f(x)', zeroline: true, zerolinecolor: '#ccc' },
+      legend: { orientation: 'h', y: -0.15 },
+    }), { responsive: true, displayModeBar: false });
 
-    var gradTraces = [
+    Plotly.react('chart-act-gradient', [
       { x: xs, y: xs.map(reluGrad), name: "ReLU'", line: { color: ACT_COLORS.relu, width: 2.5 } },
       { x: xs, y: xs.map(function (x) { return leakyReluGrad(x, alpha); }), name: "Leaky ReLU'", line: { color: ACT_COLORS.leaky, width: 2.5 } },
       { x: xs, y: xs.map(function (x) { return sinActGrad(x, omega); }), name: "Sin'", line: { color: ACT_COLORS.sin, width: 2.5 } },
-    ];
-
-    var fwdLayout = Object.assign({}, PLOTLY_LAYOUT, {
+    ], Object.assign({}, PLOTLY_LAYOUT, {
       height: 450,
-      xaxis: { title: 'x (pre-activation)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
-      yaxis: { title: 'f(x)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
+      xaxis: { title: 'x', zeroline: true, zerolinecolor: '#ccc' },
+      yaxis: { title: "f'(x)", zeroline: true, zerolinecolor: '#ccc' },
       legend: { orientation: 'h', y: -0.15 },
-      shapes: [{ type: 'line', x0: -3, x1: 3, y0: 0, y1: 0, line: { color: '#ddd', width: 1 } }],
-    });
-
-    var gradLayout = Object.assign({}, PLOTLY_LAYOUT, {
-      height: 450,
-      xaxis: { title: 'x (pre-activation)', zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
-      yaxis: { title: "f'(x)", zeroline: true, zerolinecolor: '#ccc', zerolinewidth: 1 },
-      legend: { orientation: 'h', y: -0.15 },
-      shapes: [{ type: 'line', x0: -3, x1: 3, y0: 0, y1: 0, line: { color: '#ddd', width: 1 } }],
-    });
-
-    Plotly.react('chart-act-forward', forwardTraces, fwdLayout, { responsive: true, displayModeBar: false });
-    Plotly.react('chart-act-gradient', gradTraces, gradLayout, { responsive: true, displayModeBar: false });
+    }), { responsive: true, displayModeBar: false });
   };
 
   function renderDeadNeuronChart() {
     var alpha = parseFloat(document.getElementById('act-alpha').value);
     var xs = linspace(-3, 3, 600);
-
-    var traces = [
-      {
-        x: xs, y: xs.map(function (x) { return Math.abs(reluGrad(x)); }),
-        name: 'ReLU |gradient|', fill: 'tozeroy',
-        line: { color: ACT_COLORS.relu, width: 2 },
-        fillcolor: 'rgba(231,76,60,0.15)',
-      },
-      {
-        x: xs, y: xs.map(function (x) { return Math.abs(leakyReluGrad(x, alpha)); }),
-        name: 'Leaky ReLU |gradient|', fill: 'tozeroy',
-        line: { color: ACT_COLORS.leaky, width: 2 },
-        fillcolor: 'rgba(40,116,166,0.15)',
-      },
-    ];
-
-    // Add annotation for dead zone
-    var layout = Object.assign({}, PLOTLY_LAYOUT, {
+    Plotly.react('chart-act-dead', [
+      { x: xs, y: xs.map(function (x) { return Math.abs(reluGrad(x)); }), name: 'ReLU |gradient|', fill: 'tozeroy', line: { color: ACT_COLORS.relu, width: 2 }, fillcolor: 'rgba(231,76,60,0.15)' },
+      { x: xs, y: xs.map(function (x) { return Math.abs(leakyReluGrad(x, alpha)); }), name: 'Leaky ReLU |gradient|', fill: 'tozeroy', line: { color: ACT_COLORS.leaky, width: 2 }, fillcolor: 'rgba(40,116,166,0.15)' },
+    ], Object.assign({}, PLOTLY_LAYOUT, {
       height: 380,
       xaxis: { title: 'Pre-activation value (x)' },
       yaxis: { title: '|Gradient|', range: [-0.05, 1.15] },
       legend: { orientation: 'h', y: -0.15 },
-      annotations: [{
-        x: -1.5, y: 0.05, text: 'Dead zone<br>(ReLU gradient = 0)',
-        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
-        font: { size: 12, color: ACT_COLORS.relu },
-      }, {
-        x: -1.5, y: alpha + 0.05, text: 'Leaky ReLU: gradient = α',
-        showarrow: true, arrowhead: 2, ax: 0, ay: -40,
-        font: { size: 12, color: ACT_COLORS.leaky },
-      }],
-    });
-
-    Plotly.react('chart-act-dead', traces, layout, { responsive: true, displayModeBar: false });
+      annotations: [
+        { x: -1.5, y: 0.05, text: 'Dead zone (gradient=0)', showarrow: true, arrowhead: 2, ax: 0, ay: -40, font: { size: 12, color: ACT_COLORS.relu } },
+        { x: -1.5, y: alpha + 0.05, text: 'Leaky: gradient=α', showarrow: true, arrowhead: 2, ax: 0, ay: -40, font: { size: 12, color: ACT_COLORS.leaky } },
+      ],
+    }), { responsive: true, displayModeBar: false });
   }
-
-  window.renderSignalPropagation = function () {
-    var nLayers = parseInt(document.getElementById('act-layers').value);
-    var alpha = parseFloat(document.getElementById('act-alpha').value);
-    var omega = parseFloat(document.getElementById('act-omega').value);
-    var n = 300;
-    var xs = linspace(-2, 2, n);
-
-    // Deterministic "random" weights using a simple seed pattern
-    function pseudoWeight(layer, i) {
-      var v = Math.sin((layer + 1) * 127.1 + i * 311.7) * 43758.5453;
-      return (v - Math.floor(v)) * 2 - 1;
-    }
-    function pseudoBias(layer) {
-      var v = Math.sin((layer + 1) * 269.5) * 43758.5453;
-      return ((v - Math.floor(v)) * 2 - 1) * 0.3;
-    }
-
-    function propagate(xs, actFn) {
-      var signal = xs.slice();
-      var results = [signal.slice()];
-      for (var l = 0; l < nLayers; l++) {
-        var w = pseudoWeight(l, 0) * 1.5;
-        var b = pseudoBias(l);
-        signal = signal.map(function (x) { return actFn(w * x + b); });
-        results.push(signal.slice());
-      }
-      return results;
-    }
-
-    var reluSignals = propagate(xs, relu);
-    var leakySignals = propagate(xs, function (x) { return leakyRelu(x, alpha); });
-    var sinSignals = propagate(xs, function (x) { return sinAct(x, omega); });
-
-    var traces = [];
-    var opacities = [];
-    for (var l = 0; l <= nLayers; l++) {
-      opacities.push(l === 0 ? 0.3 : (0.3 + 0.7 * l / nLayers));
-    }
-
-    // Input signal (shared)
-    traces.push({
-      x: xs, y: reluSignals[0], name: 'Input',
-      line: { color: '#888', width: 1.5, dash: 'dot' },
-      legendgroup: 'input', showlegend: true,
-    });
-
-    // Final layer for each activation
-    traces.push({
-      x: xs, y: reluSignals[nLayers], name: 'ReLU (layer ' + nLayers + ')',
-      line: { color: ACT_COLORS.relu, width: 2.5 },
-    });
-    traces.push({
-      x: xs, y: leakySignals[nLayers], name: 'Leaky ReLU (layer ' + nLayers + ')',
-      line: { color: ACT_COLORS.leaky, width: 2.5 },
-    });
-    traces.push({
-      x: xs, y: sinSignals[nLayers], name: 'Sin (layer ' + nLayers + ')',
-      line: { color: ACT_COLORS.sin, width: 2.5 },
-    });
-
-    var layout = Object.assign({}, PLOTLY_LAYOUT, {
-      height: 450,
-      xaxis: { title: 'Input x' },
-      yaxis: { title: 'Output after ' + nLayers + ' layer(s)' },
-      legend: { orientation: 'h', y: -0.15 },
-    });
-
-    Plotly.react('chart-act-signal', traces, layout, { responsive: true, displayModeBar: false });
-  };
 
   // ── Bootstrap ─────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', init);
